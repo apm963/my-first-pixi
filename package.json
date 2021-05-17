@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "parcel serve ./src/index.html",
-    "build": "parcel build ./src/index.html"
+    "build": "parcel build ./src/index.html --public-url /my-first-pixi/ --dist-dir ./docs"
   },
   "devDependencies": {
     "http-server": "^0.12.3",
