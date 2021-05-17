@@ -2,6 +2,8 @@
 
 This is a place I prototype ideas and tooling for [pixi.js](https://github.com/pixijs/pixi.js), a 2D WebGL[2] and Canvas game engine.
 
+[Try it out](https://apm963.github.io/my-first-pixi/)!
+
 ## Development
 
 To start:
