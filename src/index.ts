@@ -1,11 +1,6 @@
-/**
- * Reference:
- * - Collision detection and physics: https://spicyyoghurt.com/tutorials/html5-javascript-game-development/collision-detection-physics
- * - In-depth collision detection: http://www.jeffreythompson.org/collision-detection/table_of_contents.php
- */
-
-import { map } from "core-js/core/array";
 import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture, Resource, settings, SCALE_MODES, Container } from "pixi.js";
+import * as particles from 'pixi-particles';
+import { torch } from './particles/fire';
 
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
 const resources = loader.resources;
@@ -164,12 +159,9 @@ function createDebugOverlay(container: Container): Sprite {
 
 
 
-/** @deprecated This appears to no longer be necessary and has been replaced with spriteSheetTextureAtlasFiles
- * which automatically loads this png file
- */
-const spriteSheetImageFiles = {
-    walls: 'assets/game/sprites/0x72_16x16DungeonTileset_walls.v2.png',
-    main: 'assets/game/sprites/0x72_16x16DungeonTileset.v4.png',
+/** @description This is for images that do not have a texture atlas */
+const imageFiles = {
+    smokeParticle: 'assets/game/particles/smoke.png',
 };
 
 const spriteSheetTextureAtlasFiles = {
@@ -369,6 +361,38 @@ const setup = () => {
     
     sceneContainer.addChild(npcContainer);
     
+    
+    
+    // Add torch
+    const torchSprite = new Sprite(mainSheet['torchBottom0']);
+    torchSprite.position.set(7 * tileSize, 3 * tileSize);
+    torchSprite.zIndex = 8;
+    sceneContainer.addChild(torchSprite);
+    
+    // Add fire
+    const torchFireContainer = new Container();
+    torchFireContainer.position.set(7.5 * tileSize, 3.1 * tileSize); // Position the particle origin nicely on the torch
+    torchFireContainer.zIndex = 99;
+    torchFireContainer.scale.set(0.2);
+    const torchFireEmitter = new particles.Emitter(
+        torchFireContainer,
+        [Texture.from('smokeParticle')],
+        torch
+    );
+    torchFireEmitter.emit = true; // Start emitting
+    sceneContainer.addChild(torchFireContainer);
+    
+    /** @description Setting this allows you to skip the partical initiation and bloom phase when this scene first loads. Good for fire. */
+    const particleStartOffsetMs = 3000;
+    let particleElapsed = Date.now() - Math.max(particleStartOffsetMs, 0);
+    // Update function every frame
+    const updateParticleOnTick = (delta: number) => {
+        const now = Date.now();
+        // The emitter requires the elapsed number of seconds since the last update
+        torchFireEmitter.update((now - particleElapsed) * 0.0002);
+        particleElapsed = now;
+    };
+    
     // TEMP: Collision detection text
     const collisionTextStyle = new TextStyle({ fill: 'white', fontSize: 72 * displayScalingOffset, align: 'right' });
     const collisionText = new Text('OK', collisionTextStyle);
@@ -503,6 +527,9 @@ const setup = () => {
             
         }
         
+        // Particles
+        updateParticleOnTick(delta);
+        
     };
     
     const pauseState: GameState = (delta: number) => {
@@ -577,10 +604,9 @@ const updateLoadingText = (progressPerc: any) => {
 updateLoadingText('0');
 
 // Load sprites
-loader
-    .add( Object.values(spriteSheetTextureAtlasFiles) )
-    // .add( Object.values(spriteSheetImageFiles) )
-    .load(setup);
+loader.add( Object.values(spriteSheetTextureAtlasFiles) )
+Object.entries(imageFiles).forEach(([key, url]) => loader.add(key, url) );
+loader.load(setup);
 
 loader.onProgress.add(loader => updateLoadingText(loader.progress));
 loader.onComplete.once(() => loadingText.visible = false);
