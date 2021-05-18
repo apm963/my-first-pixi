@@ -389,8 +389,8 @@ const setup = () => {
     const playState: GameState = (delta: number) => {
         
         // Move
-        player.x += Math.min(playerVelocity.vx, playerMaxVelocity) * tileSize * delta;
-        player.y += Math.min(playerVelocity.vy, playerMaxVelocity) * tileSize * delta;
+        player.x += Math.max(Math.min(playerVelocity.vx, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
+        player.y += Math.max(Math.min(playerVelocity.vy, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
         
         // Cap movement to playable area
         player.x = Math.max(0, Math.min(player.x, (mapSize.width * tileSize) - player.width));
