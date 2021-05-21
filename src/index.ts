@@ -1,203 +1,28 @@
+import { Game } from './Game';
+
 import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture, Resource, settings, SCALE_MODES, Container } from "pixi.js";
 import * as particles from 'pixi-particles';
 import { torch } from './particles/fire';
 
-const loader = Loader.shared; // or create a dedicated one with `new Loader()`
-const resources = loader.resources;
+import { HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP, hitTestRectangle, HitRectangle } from './collisions';
+import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from './utils';
+import { KeyboardListener } from './KeyboardListener';
 
-const tau = Math.PI * 2;
+const game = new Game(window.devicePixelRatio, {width: window.innerWidth, height: window.innerHeight});
 
-function calcCenter(sprite: null | { width: number, height: number }, container: null | { width: number, height: number }): [number, number] {
-    sprite = sprite ?? {width: 0, height: 0};
-    container = container ?? {width: 0, height: 0};
-    return [
-        (container.width / 2) - (sprite.width / 2),
-        (container.height / 2) - (sprite.height / 2)
-    ];
-}
-
-function calcSpritePosCentered(x: number, y: number, sprite: { width: number, height: number }, scale: number = 1) {
-    return [
-        (x * scale) + (sprite.width / 2),
-        (y * scale) + (sprite.height / 2)
-    ];
-}
-
-function calcScaledPos(x: number, y: number, scale: number = 1) {
-    return [
-        (x * scale),
-        (y * scale)
-    ];
-}
-
-function randomTrue(chanceFloat: number) {
-    return Math.random() < chanceFloat;
-}
-
-/** @description Tweaked from https://github.com/kittykatattack/learningPixi#keyboard-movement */
-class KeyboardListener {
-    isDown = false;
-    isUp = true;
-    press: null | (() => void) = null;
-    release: null | (() => void) = null;
-    
-    constructor(public value: KeyboardEvent['key']) {
-        window.addEventListener("keydown", this.downHandler, false);
-        window.addEventListener("keyup", this.upHandler, false);
-    }
-    
-    downHandler = (event: KeyboardEvent) => {
-        if (event.key === this.value) {
-            if (this.isUp && this.press) this.press();
-            this.isDown = true;
-            this.isUp = false;
-            event.preventDefault();
-        }
-    };
-    
-    upHandler = (event: KeyboardEvent) => {
-        if (event.key === this.value) {
-            if (this.isDown && this.release) this.release();
-            this.isDown = false;
-            this.isUp = true;
-            event.preventDefault();
-        }
-    };
-    
-    /** Detach event listeners */
-    unsubscribe = () => {
-        window.removeEventListener("keydown", this.downHandler);
-        window.removeEventListener("keyup", this.upHandler);
-    };
-    
-}
-
-const HIT_LEFT = 0b0001;
-const HIT_RIGHT = 0b0010;
-const HIT_UP = 0b0100;
-const HIT_DOWN = 0b1000;
-const HIT_X = HIT_LEFT | HIT_RIGHT;
-const HIT_Y = HIT_UP | HIT_DOWN;
-
-type HitRectangle = {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-};
-
-/** @description Tweaked from https://github.com/kittykatattack/learningPixi#collision-detection */
-function hitTestRectangle(r1: HitRectangle, r2: HitRectangle): [false, 0b0] | [true, number] {
-    
-    // Find the center points of each sprite
-    const r1CenterX = r1.x + r1.width / 2;
-    const r1CenterY = r1.y + r1.height / 2;
-    const r2CenterX = r2.x + r2.width / 2;
-    const r2CenterY = r2.y + r2.height / 2;
-    
-    // Find the half-widths and half-heights of each sprite
-    const r1HalfWidth = r1.width / 2;
-    const r1HalfHeight = r1.height / 2;
-    const r2HalfWidth = r2.width / 2;
-    const r2HalfHeight = r2.height / 2;
-    
-    // Calculate the distance vector between the sprites
-    const vx = r1CenterX - r2CenterX;
-    const vy = r1CenterY - r2CenterY;
-    
-    // Figure out the combined half-widths and half-heights
-    const combinedHalfWidths = r1HalfWidth + r2HalfWidth;
-    const combinedHalfHeights = r1HalfHeight + r2HalfHeight;
-    
-    // Check for a collision on the x axis
-    if (Math.abs(vx) < combinedHalfWidths) {
-        // A collision might be occurring. Check for a collision on the y axis
-        if (Math.abs(vy) < combinedHalfHeights) {
-            // There's definitely a collision happening
-            let sideOfR1Bit: number = 0b0;
-            
-            const ox = (Math.abs(vx) - r1HalfWidth);
-            const oy = (Math.abs(vy) - r1HalfHeight);
-            
-            // console.log(`${Math.abs(oy).toFixed(2)}, ${Math.abs(ox).toFixed(2)} / oy ${(oy).toFixed(2)}, ox ${(ox).toFixed(2)}`);
-            
-            if (oy > 0 && ox < 0) {
-                sideOfR1Bit |= (r1CenterY > r2CenterY ? HIT_UP : HIT_DOWN);
-            }
-            else if (oy < 0 && ox > 0) {
-                sideOfR1Bit |= (r1CenterX > r2CenterX ? HIT_LEFT : HIT_RIGHT);
-            }
-            
-            else if (Math.abs(Math.abs(vy) - r1HalfHeight) > Math.abs(Math.abs(vx) - r1HalfWidth)) {
-                sideOfR1Bit |= (Math.sign(vy) === -1 ? HIT_DOWN : HIT_UP);
-            }
-            else {
-                sideOfR1Bit |= (Math.sign(vx) === -1 ? HIT_RIGHT : HIT_LEFT);
-            }
-            return [true, sideOfR1Bit];
-        } else {
-            // There's no collision on the y axis
-        }
-    } else {
-        // There's no collision on the x axis
-    }
-    
-    return [false, 0b0];
-};
-
-function createDebugOverlay(container: Container): Sprite {
-    const bg = new Sprite(Texture.WHITE);
-    bg.width = container.width;
-    bg.height = container.height;
-    bg.tint = 0xff0000;
-    bg.alpha = 0.3;
-    container.addChild(bg);
-    return bg;
-}
-
-
-
-
-
-/** @description This is for images that do not have a texture atlas */
-const imageFiles = {
-    smokeParticle: 'assets/game/particles/smoke.png',
-};
-
-const spriteSheetTextureAtlasFiles = {
-    walls: 'assets/game/sprites/0x72_16x16DungeonTileset_walls.v2.json',
-    main: 'assets/game/sprites/0x72_16x16DungeonTileset.v4.json',
-};
-
-const displayScalingOffset = window.devicePixelRatio;
-const displayScalingOffsetPerc = 1 / displayScalingOffset;
-let worldScale = 4; // The zoom of the world
-
-// Create a Pixi Application
-const app = new Application({
-    // width: 256,
-    // height: 256,
-    resolution: displayScalingOffset, // 2 for retina,
-    autoDensity: true,
-    antialias: false,
-});
-
-app.renderer.view.style.position = "absolute";
-app.renderer.view.style.display = "block";
-// @ts-ignore
-app.renderer.autoResize = true;
-app.renderer.resize(window.innerWidth, window.innerHeight);
-
-// Support high DPI displays
-app.stage.scale.set(displayScalingOffsetPerc);
-
-settings.SCALE_MODE = SCALE_MODES.NEAREST;
+game.app.renderer.view.style.position = "absolute";
+game.app.renderer.view.style.display = "block";
 
 // Add the canvas that Pixi automatically created for you to the HTML document
-document.body.appendChild(app.view);
+document.body.appendChild(game.app.view);
 
-// TESTING: Tweaking
-app.renderer.backgroundColor = 0x061639;
+game.load(game.setup);
+
+// TEMP for refactoring
+const loader = Loader.shared; // or create a dedicated one with `new Loader()`
+const resources = loader.resources;
+const { displayScalingOffset, worldScale, app } = game;
+const { spriteSheetTextureAtlasFiles } = Game;
 
 const setup = () => {
     // Create scene that contains all of the objects we want to render. This greatly simplifies scaling, positioning, and handling device pixel ratio.
@@ -540,7 +365,7 @@ const setup = () => {
     
     // Event listeners
     const setZoom = (level: number) => {
-        worldScale = level;
+        game.worldScale = level;
         sceneContainer.scale.set(displayScalingOffset * worldScale);
     };
     
@@ -589,24 +414,3 @@ const setup = () => {
     const gameLoop = (delta: number) => state(delta);
     app.ticker.add(delta => gameLoop(delta));
 }
-
-// Loading indicator
-const loadingTextStyle = new TextStyle({ fill: 'white', fontSize: 36 * displayScalingOffset });
-const loadingText = new Text('', loadingTextStyle);
-app.stage.addChild(loadingText);
-
-const updateLoadingText = (progressPerc: any) => {
-    loadingText.text = `Loading... ${progressPerc}%`;
-    // loadingText.position.set((app.renderer.width / 2) - (loadingText.width / 2), (app.renderer.height / 2) - (loadingText.height / 2));
-    loadingText.position.set(...calcCenter(loadingText, app.renderer));
-};
-
-updateLoadingText('0');
-
-// Load sprites
-loader.add( Object.values(spriteSheetTextureAtlasFiles) )
-Object.entries(imageFiles).forEach(([key, url]) => loader.add(key, url) );
-loader.load(setup);
-
-loader.onProgress.add(loader => updateLoadingText(loader.progress));
-loader.onComplete.once(() => loadingText.visible = false);
