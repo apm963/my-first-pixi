@@ -1,5 +1,6 @@
-import { Container, DisplayObject } from "@pixi/display";
-import { Sprite } from "@pixi/sprite";
+// import { Container, DisplayObject } from "@pixi/display";
+// import { Sprite } from "@pixi/sprite";
+import { Container, DisplayObject, Sprite } from 'pixi.js';
 
 export interface Dimensions {
     width: null | number;
@@ -102,6 +103,14 @@ export class SceneObject {
         else {
             this.geometry[geometry] = val;
         }
+    }
+    
+    addTo(container: Container): boolean {
+        if (this.item) {
+            container.addChild(this.item);
+            return true;
+        }
+        return false;
     }
     
 }

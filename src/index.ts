@@ -7,6 +7,8 @@ import { torch } from './particles/fire';
 import { HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP, hitTestRectangle, HitRectangle } from './collisions';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from './utils';
 import { KeyboardListener } from './KeyboardListener';
+import { CharacterObject } from './CharacterObject';
+import { InteractableObject } from './InteractableObject';
 
 const game = new Game(window.devicePixelRatio, {width: window.innerWidth, height: window.innerHeight});
 
@@ -15,8 +17,6 @@ game.app.renderer.view.style.display = "block";
 
 // Add the canvas that Pixi automatically created for you to the HTML document
 document.body.appendChild(game.app.view);
-
-game.load(game.setup);
 
 // TEMP for refactoring
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
@@ -184,7 +184,9 @@ const setup = () => {
     npcContainer.addChild(npcSprite);
     // createDebugOverlay(npcContainer);
     
-    sceneContainer.addChild(npcContainer);
+    const npcChar = new CharacterObject({item: npcContainer});
+    npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 });
+    npcChar.addTo(sceneContainer);
     
     
     
@@ -251,21 +253,22 @@ const setup = () => {
             sideOfPlayerBit: 0b0,
         };
         
-        const collidingObjects: { [directionBit: number]: Container[] } = [];
-        const objectsToCheck = [...wallLowerContainer.children, npcContainer];
+        const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
+        const objectsToCheck = [...wallLowerContainer.children, npcChar];
         
         // Solid collisions
         for (const i in objectsToCheck) {
-            const container = objectsToCheck[i] as Container;
-            if (!container.visible) {
+            const container = objectsToCheck[i] as Container | InteractableObject;
+            const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+            if ('visible' in container && !container.visible) {
                 continue;
             }
-            const [isCollision, sideOfPlayerBit] = hitTestRectangle(player, container);
+            const [isCollision, sideOfPlayerBit] = hitTestRectangle(player, boundingBox);
             if (isCollision) {
                 playerCollisionInfo.occurred = true;
                 playerCollisionInfo.sideOfPlayerBit |= sideOfPlayerBit;
                 collidingObjects[sideOfPlayerBit] = collidingObjects[sideOfPlayerBit] ?? [];
-                collidingObjects[sideOfPlayerBit].push(container);
+                collidingObjects[sideOfPlayerBit].push('item' in container ? container : container);
                 // break;
             }
         }
@@ -295,19 +298,31 @@ const setup = () => {
             // Reverse player's position so it no longer intersects with the object it is colliding with
             
             if (playerVelocity.vx < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
-                player.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => container.x + container.width)), player.x);
+                player.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return boundingBox.x + boundingBox.width;
+                })), player.x);
             }
             
             if (playerVelocity.vy < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
-                player.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => container.y + container.height)), player.y);
+                player.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return boundingBox.y + boundingBox.height;
+                })), player.y);
             }
             
             if (playerVelocity.vx > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
-                player.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => container.x)), player.x + player.width) - player.width;
+                player.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return boundingBox.x;
+                })), player.x + player.width) - player.width;
             }
             
             if (playerVelocity.vy > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
-                player.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => container.y)), player.y + player.height) - player.height;
+                player.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return boundingBox.y;
+                })), player.y + player.height) - player.height;
             }
             
             /** Explanation of the following:
@@ -327,7 +342,8 @@ const setup = () => {
                 const recheckCollisionsX = [...(collidingObjects[HIT_LEFT] ?? []), ...(collidingObjects[HIT_RIGHT] ?? [])];
                 const isStillCollisionX = recheckCollisionsX.reduce((carry, container) => {
                     if (carry) { return carry; }
-                    return hitTestRectangle(player, container)[0];
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return hitTestRectangle(player, boundingBox)[0];
                 }, false);
                 if (isStillCollisionX) {
                     // Revert
@@ -342,7 +358,8 @@ const setup = () => {
                 const recheckCollisionsY = [...(collidingObjects[HIT_UP] ?? []), ...(collidingObjects[HIT_DOWN] ?? [])];
                 const isStillCollisionY = recheckCollisionsY.reduce((carry, container) => {
                     if (carry) { return carry; }
-                    return hitTestRectangle(player, container)[0];
+                    const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                    return hitTestRectangle(player, boundingBox)[0];
                 }, false);
                 if (isStillCollisionY) {
                     // Revert
@@ -414,3 +431,5 @@ const setup = () => {
     const gameLoop = (delta: number) => state(delta);
     app.ticker.add(delta => gameLoop(delta));
 }
+
+game.load(setup);

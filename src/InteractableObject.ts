@@ -29,7 +29,7 @@ export class InteractableObject extends SceneObject {
         }
     }
     
-    setBoundingBox(dims: Dimensions) {
+    setBoundingBox(dims: Partial<Dimensions>) {
         Object.entries(dims).forEach(([key, val]) => {
             this.boundingBox[key] = val;
         });
