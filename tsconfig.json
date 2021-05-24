@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "target": "ES5",
         "alwaysStrict": true,
         "strict": true,
         "strictNullChecks": true,

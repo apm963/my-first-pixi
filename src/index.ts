@@ -30,8 +30,8 @@ const setup = () => {
     sceneContainer.scale.set(displayScalingOffset * worldScale);
     sceneContainer.sortableChildren = true;
     
-    const wallSheet = resources[spriteSheetTextureAtlasFiles.walls].textures;
-    const mainSheet = resources[spriteSheetTextureAtlasFiles.main].textures;
+    const wallSheet = resources[spriteSheetTextureAtlasFiles.walls]?.textures ?? {};
+    const mainSheet = resources[spriteSheetTextureAtlasFiles.main]?.textures ?? {};
     
     const tileSize = 16;
     
@@ -185,7 +185,7 @@ const setup = () => {
     // createDebugOverlay(npcContainer);
     
     const npcChar = new CharacterObject({item: npcContainer});
-    npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 });
+    npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 }, 'absolute');
     npcChar.addTo(sceneContainer);
     
     
@@ -240,12 +240,12 @@ const setup = () => {
     const playState: GameState = (delta: number) => {
         
         // Move
-        player.x += Math.max(Math.min(playerVelocity.vx, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
-        player.y += Math.max(Math.min(playerVelocity.vy, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
+        playerChar.x += Math.max(Math.min(playerChar.velocity.vx, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
+        playerChar.y += Math.max(Math.min(playerChar.velocity.vy, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
         
         // Cap movement to playable area
-        player.x = Math.max(0, Math.min(player.x, (mapSize.width * tileSize) - player.width));
-        player.y = Math.max(0, Math.min(player.y, (mapSize.height * tileSize) - player.height));
+        playerChar.x = Math.max(0, Math.min(playerChar.x, (mapSize.width * tileSize) - playerChar.width));
+        playerChar.y = Math.max(0, Math.min(playerChar.y, (mapSize.height * tileSize) - playerChar.height));
         
         // Check collisions
         let playerCollisionInfo: { occurred: boolean, sideOfPlayerBit: number } = {
@@ -256,6 +256,8 @@ const setup = () => {
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
         const objectsToCheck = [...wallLowerContainer.children, npcChar];
         
+        const playerBoundingBox = playerChar.getBoundingBox();
+        
         // Solid collisions
         for (const i in objectsToCheck) {
             const container = objectsToCheck[i] as Container | InteractableObject;
@@ -263,7 +265,7 @@ const setup = () => {
             if ('visible' in container && !container.visible) {
                 continue;
             }
-            const [isCollision, sideOfPlayerBit] = hitTestRectangle(player, boundingBox);
+            const [isCollision, sideOfPlayerBit] = hitTestRectangle(playerBoundingBox, boundingBox);
             if (isCollision) {
                 playerCollisionInfo.occurred = true;
                 playerCollisionInfo.sideOfPlayerBit |= sideOfPlayerBit;
@@ -283,7 +285,7 @@ const setup = () => {
                     width: tileSize,
                     height: tileSize,
                 };
-                const [isCollision] = hitTestRectangle(player, container);
+                const [isCollision] = hitTestRectangle(playerBoundingBox, container);
                 if (isCollision) {
                     actionFunc();
                 }
@@ -293,36 +295,36 @@ const setup = () => {
         if (playerCollisionInfo.occurred) {
             // REVIEW: This can most likely be cleaned up. This took a lot of trial-and-error to get right.
             
-            const preRollbackPos = { x: player.x, y: player.y };
+            const preRollbackPos = { x: playerChar.x, y: playerChar.y };
             
             // Reverse player's position so it no longer intersects with the object it is colliding with
             
-            if (playerVelocity.vx < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
-                player.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
+            if (playerChar.velocity.vx < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
+                playerChar.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     return boundingBox.x + boundingBox.width;
-                })), player.x);
+                })), playerChar.x);
             }
             
-            if (playerVelocity.vy < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
-                player.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
+            if (playerChar.velocity.vy < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
+                playerChar.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     return boundingBox.y + boundingBox.height;
-                })), player.y);
+                })), playerChar.y);
             }
             
-            if (playerVelocity.vx > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
-                player.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
+            if (playerChar.velocity.vx > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
+                playerChar.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     return boundingBox.x;
-                })), player.x + player.width) - player.width;
+                })), playerChar.x + playerChar.width) - playerChar.width;
             }
             
-            if (playerVelocity.vy > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
-                player.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
+            if (playerChar.velocity.vy > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
+                playerChar.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     return boundingBox.y;
-                })), player.y + player.height) - player.height;
+                })), playerChar.y + playerChar.height) - playerChar.height;
             }
             
             /** Explanation of the following:
@@ -337,33 +339,35 @@ const setup = () => {
             
             // Granular X-axis
             {
-                const nonCollidingPosX = player.x;
-                player.x = preRollbackPos.x;
+                const nonCollidingPosX = playerChar.x;
+                playerChar.x = preRollbackPos.x;
+                const updatedPlayerBoundingBox = playerChar.getBoundingBox();
                 const recheckCollisionsX = [...(collidingObjects[HIT_LEFT] ?? []), ...(collidingObjects[HIT_RIGHT] ?? [])];
                 const isStillCollisionX = recheckCollisionsX.reduce((carry, container) => {
                     if (carry) { return carry; }
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    return hitTestRectangle(player, boundingBox)[0];
+                    return hitTestRectangle(updatedPlayerBoundingBox, boundingBox)[0];
                 }, false);
                 if (isStillCollisionX) {
                     // Revert
-                    player.x = nonCollidingPosX;
+                    playerChar.x = nonCollidingPosX;
                 }
             }
             
             // Granular Y-axis
             {
-                const nonCollidingPosY = player.y;
-                player.y = preRollbackPos.y;
+                const nonCollidingPosY = playerChar.y;
+                playerChar.y = preRollbackPos.y;
+                const updatedPlayerBoundingBox = playerChar.getBoundingBox();
                 const recheckCollisionsY = [...(collidingObjects[HIT_UP] ?? []), ...(collidingObjects[HIT_DOWN] ?? [])];
                 const isStillCollisionY = recheckCollisionsY.reduce((carry, container) => {
                     if (carry) { return carry; }
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    return hitTestRectangle(player, boundingBox)[0];
+                    return hitTestRectangle(updatedPlayerBoundingBox, boundingBox)[0];
                 }, false);
                 if (isStillCollisionY) {
                     // Revert
-                    player.y = nonCollidingPosY;
+                    playerChar.y = nonCollidingPosY;
                 }
             }
             
@@ -408,21 +412,21 @@ const setup = () => {
     // TODO: Fix bug allowing player to go twice the speed if pressing up arrow and 'w' key
     const playerMaxVelocity = 3/60; // expressed in tiles per second
     
-    arrowUp.press = wKey.press = () => playerVelocity.vy -= playerMaxVelocity;
-    arrowUp.release = wKey.release = () => playerVelocity.vy -= -playerMaxVelocity;
-    arrowDown.press = sKey.press = () => playerVelocity.vy += playerMaxVelocity;
-    arrowDown.release = sKey.release = () => playerVelocity.vy += -playerMaxVelocity;
+    arrowUp.press = wKey.press = () => playerChar.velocity.vy -= playerMaxVelocity;
+    arrowUp.release = wKey.release = () => playerChar.velocity.vy -= -playerMaxVelocity;
+    arrowDown.press = sKey.press = () => playerChar.velocity.vy += playerMaxVelocity;
+    arrowDown.release = sKey.release = () => playerChar.velocity.vy += -playerMaxVelocity;
     
     arrowRight.press = dKey.press = () => {
-        playerVelocity.vx += playerMaxVelocity;
+        playerChar.velocity.vx += playerMaxVelocity;
         playerSprite.scale.x *= (playerSprite.scale.x < 0 ? -1 : 1); // Look right
     };
-    arrowRight.release = dKey.release = () => playerVelocity.vx += -playerMaxVelocity;
+    arrowRight.release = dKey.release = () => playerChar.velocity.vx += -playerMaxVelocity;
     arrowLeft.press = aKey.press = () => {
-        playerVelocity.vx -= playerMaxVelocity;
+        playerChar.velocity.vx -= playerMaxVelocity;
         playerSprite.scale.x *= (playerSprite.scale.x > 0 ? -1 : 1); // Look left
     };
-    arrowLeft.release = aKey.release = () => playerVelocity.vx -= -playerMaxVelocity;
+    arrowLeft.release = aKey.release = () => playerChar.velocity.vx -= -playerMaxVelocity;
     
     minusKey.press = () => setZoom(worldScale - 0.5);
     equalsKey.press = () => setZoom(worldScale + 0.5);

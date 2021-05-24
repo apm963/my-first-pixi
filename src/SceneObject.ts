@@ -3,19 +3,26 @@
 import { Container, DisplayObject, Sprite } from 'pixi.js';
 
 export interface Dimensions {
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+}
+
+export interface PartialDimensions {
     width: null | number;
     height: null | number;
     x: null | number;
     y: null | number;
 }
 
-type Geometry = Dimensions & { zIndex: null | number; };
+type Geometry = PartialDimensions & { zIndex: null | number; };
 
 interface Opts {
     item?: SceneObject['item'];
     bindZToY?: SceneObject['bindZToY'];
     forceZInt?: SceneObject['forceZInt'];
-    geometry?: Dimensions;
+    geometry?: PartialDimensions;
 }
 
 export class SceneObject {
@@ -44,17 +51,17 @@ export class SceneObject {
     
     get x(): number {
         const { item, geometry } = this;
-        return geometry.x ?? item.x ?? 0;
+        return geometry.x ?? item?.x ?? 0;
     }
     
     get y(): number {
         const { item, geometry } = this;
-        return geometry.y ?? item.y ?? 0;
+        return geometry.y ?? item?.y ?? 0;
     }
     
     get zIndex(): number {
         const { item, geometry } = this;
-        return geometry.zIndex ?? item.zIndex ?? 0;
+        return geometry.zIndex ?? item?.zIndex ?? 0;
     }
     
     set width(val: number) {
@@ -79,7 +86,7 @@ export class SceneObject {
     
     constructor(opts: Opts = {}) {
         Object.entries(opts).forEach(([key, val]) => {
-            this[key] = val;
+            this[key as keyof Opts] = val;
         });
     }
     
@@ -95,6 +102,7 @@ export class SceneObject {
         }
         
         if (this.item && geometry in this.item) {
+            // @ts-ignore The index lookup has already been established above. REVIEW: Can this be improved?
             this.item[geometry] = val;
             if (geometry === 'y' && this.bindZToY) {
                 this.item.zIndex = (this.forceZInt ? Math.round(val) : val);

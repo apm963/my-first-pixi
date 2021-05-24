@@ -80,7 +80,7 @@ export class Game {
         Object.entries(Game.imageFiles).forEach(([key, url]) => loader.add(key, url));
         loader.load(loadCb);
         
-        loader.onProgress.add(loader => updateLoadingText(loader.progress));
+        loader.onProgress.add((loader: Loader) => updateLoadingText(loader.progress));
         loader.onComplete.once(() => loadingText.visible = false);
         
     }
