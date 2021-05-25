@@ -166,6 +166,7 @@ const setup = () => {
     
     const playerBoundingBoxDebugOverlay = createDebugOverlay(playerContainer, sceneContainer);
     playerBoundingBoxDebugOverlay.zIndex = 12;
+    playerBoundingBoxDebugOverlay.visible = false;
     
     const playerChar = new CharacterObject({ item: playerContainer });
     playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
