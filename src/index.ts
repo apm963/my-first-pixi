@@ -303,26 +303,27 @@ const setup = () => {
         
         if (playerCollisionInfo.occurred) {
             // REVIEW: This can most likely be cleaned up. This took a lot of trial-and-error to get right.
+            // REVIEW: I'm using >= and <= for the initial velocity comparisons. This "fixes" one issue but may cause subtle bugs elsewhere.
             
             const preRollbackPos = { x: playerChar.x, y: playerChar.y };
             
             // Reverse player's position so it no longer intersects with the object it is colliding with
             let recalculatePlayerBoundingBox = false;
             
-            if (playerChar.velocity.vx < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
+            if (playerChar.velocity.vx <= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
+                    // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.x + boundingBox.width;
                 })), playerChar.x) + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy < 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
+            if (playerChar.velocity.vy <= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
+                    // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.y + boundingBox.height;
                 })), playerChar.y) + playerBoundingBoxOffset.y;
             }
@@ -334,20 +335,20 @@ const setup = () => {
                 recalculatePlayerBoundingBox = false;
             }
             
-            if (playerChar.velocity.vx > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
+            if (playerChar.velocity.vx >= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
+                    // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.x; // - boundingBoxOffset.x;
                 })), playerChar.x + playerBoundingBox.width - playerBoundingBoxOffset.x) - playerBoundingBox.width + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy > 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
+            if (playerChar.velocity.vy >= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                    const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
+                    // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.y; // - boundingBoxOffset.y;
                 })), playerChar.y + playerBoundingBox.height - playerBoundingBoxOffset.y) - playerBoundingBox.height + playerBoundingBoxOffset.y;
             }
