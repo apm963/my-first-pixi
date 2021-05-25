@@ -85,12 +85,7 @@ export class InteractableObject extends SceneObject {
     }
     
     calculateBoundingBoxOffsetFromOrigin(boundingBox: Dimensions): Dimensions {
-        return {
-            x: this.x - boundingBox.x,
-            y: this.y - boundingBox.y,
-            width: boundingBox.width,
-            height: boundingBox.height,
-        };
+        return InteractableObject.calculateBoundingBoxOffset(boundingBox, this);
     }
     
     setBoundingBox(dims: Partial<PartialDimensions>, opts: Partial<{ mode: BoundingBoxMode; target: Sprite; boundingBoxDebugOverlay: Sprite; }> = {}) {
@@ -109,5 +104,14 @@ export class InteractableObject extends SceneObject {
     }
     
     // TODO: Event listeners
+    
+    static calculateBoundingBoxOffset(boundingBox: Dimensions, originObj: {x: number, y: number}): Dimensions {
+        return {
+            x: originObj.x - boundingBox.x,
+            y: originObj.y - boundingBox.y,
+            width: boundingBox.width,
+            height: boundingBox.height,
+        };
+    }
     
 }
