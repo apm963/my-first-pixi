@@ -196,7 +196,10 @@ const setup = () => {
     const torchSprite = new Sprite(mainSheet['torchBottom0']);
     torchSprite.position.set(7 * tileSize, 3 * tileSize);
     torchSprite.zIndex = 8;
-    sceneContainer.addChild(torchSprite);
+    
+    const torchObj = new InteractableObject({ item: torchSprite });
+    torchObj.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
+    torchObj.addTo(sceneContainer);
     
     // Add fire
     const torchFireContainer = new Container();
@@ -259,7 +262,7 @@ const setup = () => {
         };
         
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
-        const objectsToCheck = [...wallLowerContainer.children, npcChar];
+        const objectsToCheck = [...wallLowerContainer.children, npcChar, torchObj];
         
         playerBoundingBox = playerChar.getBoundingBox();
         playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
