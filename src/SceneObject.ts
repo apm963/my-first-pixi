@@ -27,7 +27,7 @@ interface Opts {
 
 export class SceneObject {
     
-    private geometry: Geometry = {
+    protected geometry: Geometry = {
         width: null,
         height: null,
         x: null,

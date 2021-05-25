@@ -155,22 +155,25 @@ const setup = () => {
     actionMap[3][4] = actionMap[3][5] = () => actionOpenDoor();
     
     // Add player character
-    const player = new Container();
-    player.zIndex = 11; // This goes above the wall, floor, and npc sprites
+    const playerContainer = new Container();
+    playerContainer.zIndex = 11; // This goes above the wall, floor, and npc sprites
     
     const playerSprite = new Sprite(mainSheet['characterBeard']);
     playerSprite.anchor.set(0.5, 0.5);
     playerSprite.position.set(...calcCenter(null, playerSprite));
-    player.position.set(...calcScaledPos(2, 6, tileSize));
-    player.addChild(playerSprite);
-    // createDebugOverlay(player); // DEBUG
+    playerContainer.position.set(...calcScaledPos(2, 6, tileSize));
+    playerContainer.addChild(playerSprite);
+    const playerBoundingBoxDebugOverlay = createDebugOverlay(playerContainer, sceneContainer);
+    playerBoundingBoxDebugOverlay.zIndex = 12;
     
-    sceneContainer.addChild(player);
+    // sceneContainer.addChild(playerContainer);
     
-    const playerVelocity = {
-        vx: 0,
-        vy: 0,
-    };
+    const playerChar = new CharacterObject({ item: playerContainer });
+    // playerChar.setBoundingBox({ x: 2, width: -3 }, 'offset');
+    playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
+    playerChar.addTo(sceneContainer);
+    playerChar.velocity.vx = 0;
+    playerChar.velocity.vy = 0;
     
     // Add NPCs
     const npcContainer = new Container();
@@ -185,7 +188,7 @@ const setup = () => {
     // createDebugOverlay(npcContainer);
     
     const npcChar = new CharacterObject({item: npcContainer});
-    npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 }, 'absolute');
+    npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 }, {mode: 'absolute'});
     npcChar.addTo(sceneContainer);
     
     
@@ -243,9 +246,12 @@ const setup = () => {
         playerChar.x += Math.max(Math.min(playerChar.velocity.vx, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
         playerChar.y += Math.max(Math.min(playerChar.velocity.vy, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
         
+        let playerBoundingBox = playerChar.getBoundingBox();
+        const playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+        
         // Cap movement to playable area
-        playerChar.x = Math.max(0, Math.min(playerChar.x, (mapSize.width * tileSize) - playerChar.width));
-        playerChar.y = Math.max(0, Math.min(playerChar.y, (mapSize.height * tileSize) - playerChar.height));
+        playerChar.x = Math.max(playerBoundingBoxOffset.x, Math.min(playerChar.x, (mapSize.width * tileSize) - playerBoundingBox.width + playerBoundingBoxOffset.x));
+        playerChar.y = Math.max(playerBoundingBoxOffset.y, Math.min(playerChar.y, (mapSize.height * tileSize) - playerBoundingBox.height + playerBoundingBoxOffset.y));
         
         // Check collisions
         let playerCollisionInfo: { occurred: boolean, sideOfPlayerBit: number } = {
@@ -255,8 +261,7 @@ const setup = () => {
         
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
         const objectsToCheck = [...wallLowerContainer.children, npcChar];
-        
-        const playerBoundingBox = playerChar.getBoundingBox();
+        playerBoundingBox = playerChar.getBoundingBox();
         
         // Solid collisions
         for (const i in objectsToCheck) {
