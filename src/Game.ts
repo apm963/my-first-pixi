@@ -126,14 +126,14 @@ export class Game {
         
         arrowRight.press = dKey.press = () => {
             playerChar.velocity.vx += playerMaxVelocity;
-            const playerSprite = playerChar.item;
-            playerSprite?.scale.x && (playerSprite.scale.x *= (playerSprite.scale.x < 0 ? -1 : 1)); // Look right
+            const playerSprite = playerChar.mirrorTarget;
+            if ((playerSprite?.scale.x ?? 0) < 0) { playerChar.mirrorX(); } // Look right
         };
         arrowRight.release = dKey.release = () => playerChar.velocity.vx += -playerMaxVelocity;
         arrowLeft.press = aKey.press = () => {
             playerChar.velocity.vx -= playerMaxVelocity;
-            const playerSprite = playerChar.item;
-            playerSprite?.scale.x && (playerSprite.scale.x *= (playerSprite.scale.x > 0 ? -1 : 1)); // Look left
+            const playerSprite = playerChar.mirrorTarget;
+            if ((playerSprite?.scale.x ?? 0) > 0) { playerChar.mirrorX(); } // Look left
         };
         arrowLeft.release = aKey.release = () => playerChar.velocity.vx -= -playerMaxVelocity;
         

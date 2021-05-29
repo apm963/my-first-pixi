@@ -23,6 +23,7 @@ interface Opts {
     bindZToY?: SceneObject['bindZToY'];
     forceZInt?: SceneObject['forceZInt'];
     geometry?: PartialDimensions;
+    mirrorTarget?: SceneObject['mirrorTarget'];
 }
 
 export class SceneObject {
@@ -38,6 +39,7 @@ export class SceneObject {
     bindZToY: boolean = false;
     forceZInt: boolean = false; // REVIEW: Current technique is Math.round. Reevaluate if this is desired (or desired as a setting)
     item: null | DisplayObject | Sprite | Container = null;
+    mirrorTarget: null | Sprite = null;
     
     get width(): number {
         const { item, geometry } = this;
@@ -111,6 +113,15 @@ export class SceneObject {
         else {
             this.geometry[geometry] = val;
         }
+    }
+    
+    mirrorX(sine?: number) {
+        const mirrorItem = this.mirrorTarget ?? this.item;
+        if (mirrorItem === null) {
+            return false;
+        }
+        mirrorItem.scale.x *= sine ?? -1;
+        return true;
     }
     
     addTo(container: Container): boolean {

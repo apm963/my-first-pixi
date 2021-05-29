@@ -194,7 +194,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerBoundingBoxDebugOverlay.zIndex = 12;
         playerBoundingBoxDebugOverlay.visible = false;
         
-        const playerChar = new CharacterObject({ item: playerContainer });
+        const playerChar = new CharacterObject({ item: playerContainer, mirrorTarget: playerSprite });
         playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
         playerChar.addTo(sceneContainer);
         playerChar.velocity.vx = 0;
