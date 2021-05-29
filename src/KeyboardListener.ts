@@ -2,8 +2,8 @@
 export class KeyboardListener {
     isDown = false;
     isUp = true;
-    press: null | (() => void) = null;
-    release: null | (() => void) = null;
+    press: null | ((event: KeyboardEvent) => void) = null;
+    release: null | ((event: KeyboardEvent) => void) = null;
     
     constructor(public value: KeyboardEvent['code']) {
         window.addEventListener("keydown", this.downHandler, false);
@@ -14,7 +14,7 @@ export class KeyboardListener {
         if (event.code !== this.value) {
             return;
         }
-        if (this.isUp && this.press) this.press();
+        if (this.isUp && this.press) this.press(event);
         this.isDown = true;
         this.isUp = false;
         event.preventDefault();
@@ -24,7 +24,7 @@ export class KeyboardListener {
         if (event.code !== this.value) {
             return;
         }
-        if (this.isDown && this.release) this.release();
+        if (this.isDown && this.release) this.release(event);
         this.isDown = false;
         this.isUp = true;
         event.preventDefault();
