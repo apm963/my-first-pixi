@@ -1,4 +1,4 @@
-import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container } from "pixi.js";
+import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
 import { calcCenter } from "./utils";
 import { InteractableObject } from "./InteractableObject";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
@@ -205,7 +205,7 @@ export class Game {
         };
         
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
-        const objectsToCheck = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch.base];
+        const objectsToCheck: (DisplayObject | InteractableObject)[] = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch.base];
         
         playerBoundingBox = playerChar.getBoundingBox();
         playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
