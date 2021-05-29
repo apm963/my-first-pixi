@@ -182,7 +182,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         doorAction.x = Math.min(...doorTiles.map(doorTile => doorTile.x));
         doorAction.y = Math.max(...doorTiles.map(doorTile => doorTile.y + doorTile.height));
         doorAction.width = tileSize * 2;
-        doorAction.height = tileSize;
+        doorAction.height = tileSize / 2;
         doorAction.addEventListener('collision', actionOpenDoor, {once: true});
         
         actions.push(doorAction);
