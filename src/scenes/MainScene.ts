@@ -26,7 +26,7 @@ type SceneObjects = {
         fire: Container;
         fireEmitter: particles.Emitter;
     };
-    actions: (() => void)[][]; // TODO: Make InteractableObject
+    actions: InteractableObject[];
 };
 
 export class MainScene extends GameSceneBase implements GameSceneIface<SceneObjects> {
@@ -97,8 +97,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             .fill(null)
             .map(() => Array(mapSize.width).fill('floorTile'));
         
-        const actionMap: ( () => void )[][] = Array(mapSize.height)
-            .fill(null);
+        const actions: InteractableObject[] = [];
         
         // Convert some to tiles to dirt floor
         backgroundFloorMap[0] = ['floorDirtTopLeft', ...Array(mapSize.width - 2).fill('floorDirtTop'), 'floorDirtTopRight'];
@@ -158,10 +157,12 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         // Add actions (door open, etc.)
         let doorOpen = false;
-        const actionOpenDoor = () => {
+        const doorTiles = [...wallUpperSprites, ...wallLowerSprites]
+            .filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName)));
+        
+        const actionOpenDoor = (collisionItems: InteractableObject[]) => {
             if (doorOpen) { return; }
-            [...wallUpperSprites, ...wallLowerSprites]
-                .filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName)))
+            doorTiles
                 .forEach(sprite => {
                     
                     // Swap out sprite with corresponding open door sprite
@@ -177,8 +178,14 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             doorOpen = true;
         };
         
-        actionMap[3] = Array(mapSize.width);
-        actionMap[3][4] = actionMap[3][5] = () => actionOpenDoor();
+        const doorAction = new InteractableObject();
+        doorAction.x = Math.min(...doorTiles.map(doorTile => doorTile.x));
+        doorAction.y = Math.max(...doorTiles.map(doorTile => doorTile.y + doorTile.height));
+        doorAction.width = tileSize * 2;
+        doorAction.height = tileSize;
+        doorAction.addEventListener('collision', actionOpenDoor, {once: true});
+        
+        actions.push(doorAction);
         
         // Add player character
         const playerContainer = new Container();
@@ -263,7 +270,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
                 fire: torchFireContainer,
                 fireEmitter: torchFireEmitter,
             },
-            actions: actionMap,
+            actions,
         };
     }
     

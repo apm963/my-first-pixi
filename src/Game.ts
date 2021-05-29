@@ -240,19 +240,11 @@ export class Game {
         }
         
         // Action collisions
-        currentScene.items.actions.forEach((actionRow, r) => {
-            (actionRow ?? []).forEach((actionFunc, c) => {
-                const container: HitRectangle = {
-                    x: c * tileSize,
-                    y: r * tileSize,
-                    width: tileSize,
-                    height: tileSize,
-                };
-                const [isCollision] = hitTestRectangle(playerBoundingBox, container);
-                if (isCollision) {
-                    actionFunc();
-                }
-            });
+        currentScene.items.actions.forEach((actionItem, r) => {
+            const [isCollision] = hitTestRectangle(playerBoundingBox, actionItem);
+            if (isCollision) {
+                actionItem.dispatchCollisionEvent([playerChar]);
+            }
         });
         
         if (playerCollisionInfo.occurred) {
