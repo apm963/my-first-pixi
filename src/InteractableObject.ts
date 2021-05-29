@@ -14,6 +14,12 @@ export interface Velocity {
  */
 type BoundingBoxMode = 'relative' | 'absolute' | 'offset';
 
+type Events = 'collision';
+type EventCb = (...args: any[]) => void;
+interface EventOpts {
+    once: boolean;
+};
+
 export class InteractableObject extends SceneObject {
     
     protected boundingBoxMode: BoundingBoxMode = 'absolute';
@@ -31,6 +37,10 @@ export class InteractableObject extends SceneObject {
     velocity: Velocity = {
         vx: 0,
         vy: 0,
+    };
+    
+    protected eventListeners: { [eventName in Events]: { cb: EventCb; opts: Partial<EventOpts>; }[] } = {
+        'collision': [],
     };
     
     getBoundingBox(): Dimensions {
@@ -103,7 +113,31 @@ export class InteractableObject extends SceneObject {
         }
     }
     
-    // TODO: Event listeners
+    addEventListener(type: Events, listener: EventCb, opts?: Partial<EventOpts>) {
+        this.eventListeners[type].push({
+            cb: listener,
+            opts: opts ?? {},
+        });
+        return this;
+    }
+    
+    removeEventListener(type: Events, listener: EventCb) {
+        this.eventListeners[type] = this.eventListeners[type].filter(eventItem => eventItem.cb !== listener);
+        return this;
+    }
+    
+    dispatchEvent(type: Events, ...args: any[]) {
+        for (const eventItem of this.eventListeners[type]) {
+            eventItem.cb(...args);
+            if (eventItem.opts.once === true) {
+                this.removeEventListener(type, eventItem.cb);
+            }
+        }
+    }
+    
+    dispatchCollisionEvent(collidingObjects: InteractableObject[]) {
+        this.dispatchEvent('collision', collidingObjects);
+    }
     
     static calculateBoundingBoxOffset(boundingBox: Dimensions, originObj: {x: number, y: number}): Dimensions {
         return {
