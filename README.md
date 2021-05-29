@@ -24,6 +24,8 @@ The sprite sheets used in this repo are from the following authors:
 
 * [0x72](https://0x72.itch.io/): [Dungeon tileset](https://0x72.itch.io/16x16-dungeon-tileset)
 
+Sprite sheets and atlases can be loaded into [Leshy SpriteSheet Tool](https://www.leshylabs.com/apps/sstool/) and viewed / edited by first dragging the sprite image file into it, then next dragging the corresponding atlas `.json` into it. The atlas can then be clicked around in. Frames can also be edited and a texture atlas reexported.
+
 # Resources
 
 The following is a list of helpful resources:
