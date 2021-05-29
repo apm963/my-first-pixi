@@ -205,7 +205,7 @@ export class Game {
         };
         
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
-        const objectsToCheck = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch];
+        const objectsToCheck = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch.base];
         
         playerBoundingBox = playerChar.getBoundingBox();
         playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
