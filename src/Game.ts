@@ -107,12 +107,12 @@ export class Game {
             new KeyboardListener('ArrowRight'),
             new KeyboardListener('ArrowDown'),
             new KeyboardListener('ArrowLeft'),
-            new KeyboardListener('w'),
-            new KeyboardListener('d'),
-            new KeyboardListener('s'),
-            new KeyboardListener('a'),
-            new KeyboardListener('-'),
-            new KeyboardListener('='),
+            new KeyboardListener('KeyW'),
+            new KeyboardListener('KeyD'),
+            new KeyboardListener('KeyS'),
+            new KeyboardListener('KeyA'),
+            new KeyboardListener('Minus'),
+            new KeyboardListener('Equal'),
         ];
         
         // TODO: Improve this velocity logic to distribute speed based on relative circle position

@@ -5,27 +5,29 @@ export class KeyboardListener {
     press: null | (() => void) = null;
     release: null | (() => void) = null;
     
-    constructor(public value: KeyboardEvent['key']) {
+    constructor(public value: KeyboardEvent['code']) {
         window.addEventListener("keydown", this.downHandler, false);
         window.addEventListener("keyup", this.upHandler, false);
     }
     
     downHandler = (event: KeyboardEvent) => {
-        if (event.key === this.value) {
-            if (this.isUp && this.press) this.press();
-            this.isDown = true;
-            this.isUp = false;
-            event.preventDefault();
+        if (event.code !== this.value) {
+            return;
         }
+        if (this.isUp && this.press) this.press();
+        this.isDown = true;
+        this.isUp = false;
+        event.preventDefault();
     };
     
     upHandler = (event: KeyboardEvent) => {
-        if (event.key === this.value) {
-            if (this.isDown && this.release) this.release();
-            this.isDown = false;
-            this.isUp = true;
-            event.preventDefault();
+        if (event.code !== this.value) {
+            return;
         }
+        if (this.isDown && this.release) this.release();
+        this.isDown = false;
+        this.isUp = true;
+        event.preventDefault();
     };
     
     /** Detach event listeners */
