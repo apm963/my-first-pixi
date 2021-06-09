@@ -5,6 +5,7 @@ import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
 import { HitRectangle, hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
+import { Dimensions } from "./SceneObject";
 
 // TODO: Move these to this.loader
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
@@ -201,16 +202,24 @@ export class Game {
         const sceneItems = currentScene.getItemsFlat();
         
         // Move
-        const movedItems = sceneItems
-            .map(item => item instanceof InteractableObject && item.move(delta, tileSize))
-            .filter(moved => moved);
+        const movedItems = sceneItems.filter(item => item instanceof InteractableObject && item.move(delta, tileSize));
         
-        let playerBoundingBox = playerChar.getBoundingBox();
-        let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
-        
-        // Cap movement to playable area
-        playerChar.x = Math.max(playerBoundingBoxOffset.x, Math.min(playerChar.x, (mapSize.width * tileSize) - playerBoundingBox.width + playerBoundingBoxOffset.x));
-        playerChar.y = Math.max(playerBoundingBoxOffset.y, Math.min(playerChar.y, (mapSize.height * tileSize) - playerBoundingBox.height + playerBoundingBoxOffset.y));
+        // Cap movement to playable area based on bounding box
+        movedItems.forEach(item => {
+            const boundingBox: Dimensions = (
+                item instanceof InteractableObject
+                ? item.getBoundingBox()
+                : item
+            );
+            const boundingBoxOffset: Dimensions = (
+                item instanceof InteractableObject
+                ? item.calculateBoundingBoxOffsetFromOrigin(boundingBox)
+                : {width: item.width, height: item.height, x: 0, y: 0}
+            );
+            
+            item.x = Math.max(boundingBoxOffset.x, Math.min(item.x, (mapSize.width * tileSize) - boundingBox.width + boundingBoxOffset.x));
+            item.y = Math.max(boundingBoxOffset.y, Math.min(item.y, (mapSize.height * tileSize) - boundingBox.height + boundingBoxOffset.y));
+        });
         
         // Check collisions
         let playerCollisionInfo: { occurred: boolean, sideOfPlayerBit: number } = {
@@ -221,8 +230,8 @@ export class Game {
         const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
         const objectsToCheck: (DisplayObject | InteractableObject)[] = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch.base];
         
-        playerBoundingBox = playerChar.getBoundingBox();
-        playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+        let playerBoundingBox = playerChar.getBoundingBox();
+        let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
         
         // Solid collisions
         for (const i in objectsToCheck) {
