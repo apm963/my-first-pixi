@@ -191,17 +191,19 @@ export class Game {
         const currentScene = this.currentScene as null | MainScene;
         const CurrentScene = MainScene; // TODO: Make this better
         const { mapSize } = CurrentScene;
-        const { playerMaxVelocity, tileSize } = Game;
+        const { tileSize } = Game;
         
         if (currentScene === null) {
             return;
         }
         
-        const playerChar = (currentScene as MainScene).items.playerChar; // TODO: Type safe
+        const playerChar = currentScene.items.playerChar;
+        const sceneItems = currentScene.getItemsFlat();
         
         // Move
-        playerChar.x += Math.max(Math.min(playerChar.velocity.vx, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
-        playerChar.y += Math.max(Math.min(playerChar.velocity.vy, playerMaxVelocity), -playerMaxVelocity) * tileSize * delta;
+        const movedItems = sceneItems
+            .map(item => item instanceof InteractableObject && item.move(delta, tileSize))
+            .filter(moved => moved);
         
         let playerBoundingBox = playerChar.getBoundingBox();
         let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);

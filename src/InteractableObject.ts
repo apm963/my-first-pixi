@@ -39,9 +39,25 @@ export class InteractableObject extends SceneObject {
         vy: 0,
     };
     
+    maxVelocity: Velocity = {
+        vx: Infinity,
+        vy: Infinity,
+    };
+    
     protected eventListeners: { [eventName in Events]: { cb: EventCb; opts: Partial<EventOpts>; }[] } = {
         'collision': [],
     };
+    
+    move(delta: number, tileSize: number) {
+        const oldDims = {x: this.x, y: this.y};
+        if (this.velocity.vx !== 0) {
+            this.x += Math.max(Math.min(this.velocity.vx, this.maxVelocity.vx), -this.maxVelocity.vx) * tileSize * delta;
+        }
+        if (this.velocity.vy !== 0) {
+            this.y += Math.max(Math.min(this.velocity.vy, this.maxVelocity.vy), -this.maxVelocity.vy) * tileSize * delta;
+        }
+        return this.x !== oldDims.x || this.y !== oldDims.y;
+    }
     
     getBoundingBox(): Dimensions {
         const { boundingBox, boundingBoxMode, item } = this;

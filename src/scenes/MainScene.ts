@@ -11,6 +11,7 @@ import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
 import { InteractableObject } from "../InteractableObject";
+import { SceneObject } from "../SceneObject";
 
 
 
@@ -48,12 +49,25 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
     }
     
+    getItemsFlat(): (Container | SceneObject)[] {
+        return [
+            this.items.playerChar,
+            this.items.npcChar,
+            this.items.floor,
+            ...this.items.walls,
+            ...this.items.door,
+            this.items.torch.base,
+            this.items.torch.fire,
+            ...this.items.actions,
+        ];
+    }
+    
     generateObjects(): SceneObjects {
         
         const { game, resources } = this;
         const { mapSize } = MainScene;
         const { displayScalingOffset, worldScale } = game;
-        const { spriteSheetTextureAtlasFiles, tileSize } = Game;
+        const { spriteSheetTextureAtlasFiles, tileSize, playerMaxVelocity } = Game;
         
         // Create scene that contains all of the objects we want to render. This greatly simplifies scaling, positioning, and handling device pixel ratio.
         const sceneContainer = this.sceneContainer;
@@ -206,6 +220,8 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerChar.addTo(sceneContainer);
         playerChar.velocity.vx = 0;
         playerChar.velocity.vy = 0;
+        playerChar.maxVelocity.vx = playerMaxVelocity;
+        playerChar.maxVelocity.vy = playerMaxVelocity;
         
         // Add NPCs
         const npcContainer = new Container();
