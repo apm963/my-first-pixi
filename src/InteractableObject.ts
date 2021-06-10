@@ -14,7 +14,7 @@ export interface Velocity {
  */
 type BoundingBoxMode = 'relative' | 'absolute' | 'offset';
 
-type Events = 'collision';
+type Events = 'collision' | 'collisionSceneBoundary';
 type EventCb = (...args: any[]) => void;
 interface EventOpts {
     once: boolean;
@@ -46,17 +46,18 @@ export class InteractableObject extends SceneObject {
     
     protected eventListeners: { [eventName in Events]: { cb: EventCb; opts: Partial<EventOpts>; }[] } = {
         'collision': [],
+        'collisionSceneBoundary': [],
     };
     
     move(delta: number, tileSize: number) {
-        const oldDims = {x: this.x, y: this.y};
+        const oldCoords = {x: this.x, y: this.y};
         if (this.velocity.vx !== 0) {
             this.x += Math.max(Math.min(this.velocity.vx, this.maxVelocity.vx), -this.maxVelocity.vx) * tileSize * delta;
         }
         if (this.velocity.vy !== 0) {
             this.y += Math.max(Math.min(this.velocity.vy, this.maxVelocity.vy), -this.maxVelocity.vy) * tileSize * delta;
         }
-        return this.x !== oldDims.x || this.y !== oldDims.y;
+        return this.x !== oldCoords.x || this.y !== oldCoords.y;
     }
     
     getBoundingBox(): Dimensions {

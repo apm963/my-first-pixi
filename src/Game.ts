@@ -217,8 +217,21 @@ export class Game {
                 : {width: item.width, height: item.height, x: 0, y: 0}
             );
             
-            item.x = Math.max(boundingBoxOffset.x, Math.min(item.x, (mapSize.width * tileSize) - boundingBox.width + boundingBoxOffset.x));
-            item.y = Math.max(boundingBoxOffset.y, Math.min(item.y, (mapSize.height * tileSize) - boundingBox.height + boundingBoxOffset.y));
+            const oldCoords = { x: item.x, y: item.y };
+            const mapDims = { width: (mapSize.width * tileSize), height: (mapSize.height * tileSize) };
+            
+            item.x = Math.max(boundingBoxOffset.x, Math.min(item.x, mapDims.width - boundingBox.width + boundingBoxOffset.x));
+            item.y = Math.max(boundingBoxOffset.y, Math.min(item.y, mapDims.height - boundingBox.height + boundingBoxOffset.y));
+            
+            if ((item.x !== oldCoords.x || item.y !== oldCoords.y) && item instanceof InteractableObject) {
+                // Trigger special collision event
+                item.dispatchEvent('collisionSceneBoundary', {
+                    x: boundingBoxOffset.x,
+                    y: boundingBoxOffset.y,
+                    width: mapDims.width,
+                    height: mapDims.height,
+                });
+            }
         });
         
         // Check collisions
