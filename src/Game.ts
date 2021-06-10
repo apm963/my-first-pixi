@@ -116,8 +116,6 @@ export class Game {
             new KeyboardListener('Equal'),
         ];
         
-        // TODO: Improve this velocity logic to distribute speed based on relative circle position
-        // TODO: Fix bug allowing player to go twice the speed if pressing up arrow and 'w' key
         const { playerMaxVelocity } = Game;
         
         arrowUp.press = wKey.press = () => playerChar.velocity.vy -= playerMaxVelocity;

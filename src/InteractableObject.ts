@@ -7,7 +7,7 @@ export interface Velocity {
     vy: number;
 }
 
-/** 
+/**
  * @description The modifier that is applied to the specified bounding box.
  * When set to 'relative', the coords (x, y) are relative to the Object's coords but the size (width, height) is absolute.
  * When set to 'offset', both the coords and the size (x, y, width, height) are all factored.
@@ -82,11 +82,12 @@ export class InteractableObject extends SceneObject {
     
     move(delta: number, tileSize: number) {
         const oldCoords = {x: this.x, y: this.y};
-        if (this.velocity.vx !== 0) {
-            this.x += Math.max(Math.min(this.velocity.vx, this.maxVelocity.vx), -this.maxVelocity.vx) * tileSize * delta;
+        const velocityCircular = this.getSmoothVelocityCircular();
+        if (velocityCircular.vx !== 0) {
+            this.x += Math.max(Math.min(velocityCircular.vx, this.maxVelocity.vx), -this.maxVelocity.vx) * tileSize * delta;
         }
-        if (this.velocity.vy !== 0) {
-            this.y += Math.max(Math.min(this.velocity.vy, this.maxVelocity.vy), -this.maxVelocity.vy) * tileSize * delta;
+        if (velocityCircular.vy !== 0) {
+            this.y += Math.max(Math.min(velocityCircular.vy, this.maxVelocity.vy), -this.maxVelocity.vy) * tileSize * delta;
         }
         return this.x !== oldCoords.x || this.y !== oldCoords.y;
     }
@@ -159,6 +160,27 @@ export class InteractableObject extends SceneObject {
             }
             this.boundingBox[prop] = val;
         }
+    }
+    
+    /**
+     * @summary Makes multi-axis (diagonal) movement the same relative speed as single-axis movement
+     * @description In the future this may need to be replaced with the concept of "velocity" (not public-facing vx, vy)
+     * and "direction" (a value between 0 and Pi). The internal vx and vy would then be calculated from that within the move function.
+     */
+    private getSmoothVelocityCircular() {
+        const velocity = {...this._velocity};
+        
+        if (Math.abs(velocity.vx) === 0 || Math.abs(velocity.vy) === 0) {
+            // This is either single-axis movement or not moving at all. We do not have to handle for this case.
+            return velocity;
+        }
+        
+        const multiplier = Math.PI / 4;
+        
+        velocity.vx *= multiplier;
+        velocity.vy *= multiplier;
+        
+        return velocity;
     }
     
     setVelocity(velocity: Partial<Velocity>) {
