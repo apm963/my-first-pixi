@@ -262,6 +262,10 @@ export class Game {
                     
                     if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
                         collisionCheckItem.dispatchCollisionEvent([container]);
+                        // Trigger the inverse as well if the target is stationary (otherwise a moving target will get dispatched twice)
+                        if (!movedItems.includes(container)) {
+                            container.dispatchCollisionEvent([collisionCheckItem]);
+                        }
                     }
                     // break;
                 }

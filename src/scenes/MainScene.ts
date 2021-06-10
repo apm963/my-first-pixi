@@ -254,6 +254,31 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
         npcChar.addEventListener('velocityChange', handleCharacterFacingDirection);
+        
+        let npcWalkPauseTimeout: null | number = null;
+        let npcPreCollisionVx: number = 0;
+        
+        npcChar.addEventListener('collision', (items: InteractableObject[]) => {
+            const [item] = items;
+            if (item !== playerChar) {
+                // Probably a wall; reverse!
+                npcChar.velocity.vx *= -1;
+                return;
+            }
+            const origVx = npcChar.velocity.vx;
+            if (origVx !== 0 && npcPreCollisionVx === 0) {
+                npcChar.velocity.vx = 0;
+                npcPreCollisionVx = origVx;
+            }
+            if (npcWalkPauseTimeout !== null) {
+                clearTimeout(npcWalkPauseTimeout);
+            }
+            npcWalkPauseTimeout = window.setTimeout(() => {
+                npcChar.velocity.vx = npcPreCollisionVx;
+                npcPreCollisionVx = 0;
+                npcWalkPauseTimeout = null;
+            }, 2000);
+        });
         npcChar.addTo(sceneContainer);
         
         
