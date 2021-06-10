@@ -49,7 +49,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
     }
     
-    getItemsFlat(): (Container | SceneObject)[] {
+    getItemsFlat(): (Container | InteractableObject /* | SceneObject */)[] {
         return [
             this.items.playerChar,
             this.items.npcChar,
@@ -176,6 +176,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         const actionOpenDoor = (collisionItems: InteractableObject[]) => {
             if (doorOpen) { return; }
+            if (!collisionItems.includes(playerChar)) { return; }
             doorTiles
                 .forEach(sprite => {
                     
@@ -244,7 +245,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcSprite.anchor.set(0.5, 0.5);
         npcSprite.scale.x *= -1;
         npcSprite.position.set(...calcCenter(null, playerSprite));
-        npcContainer.position.set(...calcScaledPos((mapSize.width - 4), 4, tileSize));
+        npcContainer.position.set(...calcScaledPos((mapSize.width - 7), 0, tileSize));
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         

@@ -93,10 +93,10 @@ export class InteractableObject extends SceneObject {
     
     getBoundingBox(): Dimensions {
         const { boundingBox, boundingBoxMode, item } = this;
-        const itemCoalesced = item ?? ({} as Partial< Exclude<typeof item, null> >); // REVIEW: Should it be `this` instead?
+        const itemCoalesced: Pick<Exclude<typeof item, null>, 'x' | 'y'> & { width?: number; height?: number; } = item ?? this;
         const coalescedBoundingBox: Dimensions = {
-            width: boundingBox.width ?? ('width' in itemCoalesced ? itemCoalesced.width : 0),
-            height: boundingBox.height ?? ('height' in itemCoalesced ? itemCoalesced.height : 0),
+            width: boundingBox.width ?? ('width' in itemCoalesced ? (itemCoalesced.width ?? 0) : 0),
+            height: boundingBox.height ?? ('height' in itemCoalesced ? (itemCoalesced.height ?? 0) : 0),
             x: boundingBox.x ?? itemCoalesced.x ?? 0,
             y: boundingBox.y ?? itemCoalesced.y ?? 0,
         };

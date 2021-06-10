@@ -215,45 +215,71 @@ export class Game {
         });
         
         // Check collisions
-        let playerCollisionInfo: { occurred: boolean, sideOfPlayerBit: number } = {
-            occurred: false,
-            sideOfPlayerBit: 0b0,
-        };
+        const collisionCheckItems = [...movedItems, ...currentScene.items.actions];
+        const collisionInfoDict: {
+            occurred: boolean;
+            sideOfPlayerBit: number;
+            collisions: { [directionBit: number]: (Container | InteractableObject)[] };
+        }[] = [];
         
-        const collidingObjects: { [directionBit: number]: (Container | InteractableObject)[] } = [];
-        const objectsToCheck: (DisplayObject | InteractableObject)[] = [...currentScene.items.walls[0].children, currentScene.items.npcChar, currentScene.items.torch.base];
-        
-        let playerBoundingBox = playerChar.getBoundingBox();
-        let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
-        
-        // Solid collisions
-        for (const i in objectsToCheck) {
-            const container = objectsToCheck[i] as Container | InteractableObject;
-            const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-            if ('visible' in container && !container.visible) {
-                continue;
+        collisionCheckItems.forEach((collisionCheckItem, i) => {
+            
+            // Init dict
+            collisionInfoDict[i] = {
+                occurred: false,
+                sideOfPlayerBit: 0b0,
+                collisions: [],
+            };
+            const collisionInfoRef = collisionInfoDict[i];
+            
+            const objectsToCheck: (DisplayObject | InteractableObject)[] = [
+                // TODO: Genericize this
+                ...currentScene.items.walls[0].children,
+                currentScene.items.playerChar,
+                currentScene.items.npcChar,
+                currentScene.items.torch.base,
+            ].filter(item => item !== collisionCheckItem);
+            
+            let sourceBoundingBox = 'getBoundingBox' in collisionCheckItem ? collisionCheckItem.getBoundingBox() : collisionCheckItem;
+            
+            // Solid collisions
+            for (const i in objectsToCheck) {
+                const container = objectsToCheck[i] as Container | InteractableObject;
+                const targetBoundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+                if (collisionCheckItem === currentScene.items.actions[0] && container === playerChar) {
+                    const [isCollision] = hitTestRectangle(collisionCheckItem, container);
+                    const [isCollisionBounding] = hitTestRectangle(collisionCheckItem, targetBoundingBox);
+                }
+                if ('visible' in container ? !container.visible : container.item?.visible === false) {
+                    continue;
+                }
+                const [isCollision, sideOfPlayerBit] = hitTestRectangle(sourceBoundingBox, targetBoundingBox);
+                if (isCollision) {
+                    collisionInfoRef.occurred = true;
+                    collisionInfoRef.sideOfPlayerBit |= sideOfPlayerBit;
+                    collisionInfoRef.collisions[sideOfPlayerBit] = collisionInfoRef.collisions[sideOfPlayerBit] ?? [];
+                    collisionInfoRef.collisions[sideOfPlayerBit].push('item' in container ? container : container);
+                    
+                    if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
+                        collisionCheckItem.dispatchCollisionEvent([container]);
+                    }
+                    // break;
+                }
             }
-            const [isCollision, sideOfPlayerBit] = hitTestRectangle(playerBoundingBox, boundingBox);
-            if (isCollision) {
-                playerCollisionInfo.occurred = true;
-                playerCollisionInfo.sideOfPlayerBit |= sideOfPlayerBit;
-                collidingObjects[sideOfPlayerBit] = collidingObjects[sideOfPlayerBit] ?? [];
-                collidingObjects[sideOfPlayerBit].push('item' in container ? container : container);
-                // break;
-            }
-        }
-        
-        // Action collisions
-        currentScene.items.actions.forEach((actionItem, r) => {
-            const [isCollision] = hitTestRectangle(playerBoundingBox, actionItem);
-            if (isCollision) {
-                actionItem.dispatchCollisionEvent([playerChar]);
-            }
+            
         });
         
-        if (playerCollisionInfo.occurred) {
+        const playerCheckItemIndex = collisionCheckItems.findIndex(item => item === playerChar);
+        const playerCollisionInfo = collisionInfoDict[playerCheckItemIndex] ?? null;
+        
+        // Handle collisions
+        if (playerCollisionInfo && playerCollisionInfo.occurred) {
             // REVIEW: This can most likely be cleaned up. This took a lot of trial-and-error to get right.
             // REVIEW: I'm using >= and <= for the initial velocity comparisons. This "fixes" one issue but may cause subtle bugs elsewhere.
+            
+            const collidingObjects = playerCollisionInfo.collisions;
+            let playerBoundingBox = playerChar.getBoundingBox();
+            let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
             
             const preRollbackPos = { x: playerChar.x, y: playerChar.y };
             
@@ -363,6 +389,10 @@ export class Game {
     
     pauseState: GameState = (delta: number) => {
         // Do nothing for now
+    }
+    
+    checkCollisions(item: unknown) {
+        
     }
     
 }
