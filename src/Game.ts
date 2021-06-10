@@ -120,35 +120,15 @@ export class Game {
         // TODO: Fix bug allowing player to go twice the speed if pressing up arrow and 'w' key
         const { playerMaxVelocity } = Game;
         
-        const handlePlayerFacingDirection = () => {
-            const playerSprite = playerChar.mirrorTarget;
-            if (Math.abs(playerChar.velocity.vx) > 0 && (playerSprite?.scale.x ?? 0) !== Math.sign(playerChar.velocity.vx)) {
-                // Change player's direction
-                playerChar.mirrorX();
-            }
-        };
-        
         arrowUp.press = wKey.press = () => playerChar.velocity.vy -= playerMaxVelocity;
         arrowUp.release = wKey.release = () => playerChar.velocity.vy -= -playerMaxVelocity;
         arrowDown.press = sKey.press = () => playerChar.velocity.vy += playerMaxVelocity;
         arrowDown.release = sKey.release = () => playerChar.velocity.vy += -playerMaxVelocity;
         
-        arrowRight.press = dKey.press = () => {
-            playerChar.velocity.vx += playerMaxVelocity;
-            handlePlayerFacingDirection();
-        };
-        arrowRight.release = dKey.release = () => {
-            playerChar.velocity.vx += -playerMaxVelocity;
-            handlePlayerFacingDirection();
-        };
-        arrowLeft.press = aKey.press = () => {
-            playerChar.velocity.vx -= playerMaxVelocity;
-            handlePlayerFacingDirection();
-        };
-        arrowLeft.release = aKey.release = () => {
-            playerChar.velocity.vx -= -playerMaxVelocity;
-            handlePlayerFacingDirection();
-        };
+        arrowRight.press = dKey.press = () => playerChar.velocity.vx += playerMaxVelocity;
+        arrowRight.release = dKey.release = () => playerChar.velocity.vx += -playerMaxVelocity;
+        arrowLeft.press = aKey.press = () => playerChar.velocity.vx -= playerMaxVelocity;
+        arrowLeft.release = aKey.release = () => playerChar.velocity.vx -= -playerMaxVelocity;
         
         minusKey.press = () => setZoom(this.worldScale - 0.5);
         equalsKey.press = () => setZoom(this.worldScale + 0.5);

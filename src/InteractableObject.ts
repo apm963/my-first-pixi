@@ -14,7 +14,7 @@ export interface Velocity {
  */
 type BoundingBoxMode = 'relative' | 'absolute' | 'offset';
 
-type Events = 'collision' | 'collisionSceneBoundary';
+type Events = 'collision' | 'collisionSceneBoundary' | 'velocityChange';
 type EventCb = (...args: any[]) => void;
 interface EventOpts {
     once: boolean;
@@ -34,7 +34,8 @@ export class InteractableObject extends SceneObject {
     protected boundingBoxTarget: null | Container = null;
     private boundingBoxDebugOverlay: null | Sprite = null;
     
-    velocity: Velocity = {
+    /** This is used with the velocity getter */
+    private _velocity: Velocity = {
         vx: 0,
         vy: 0,
     };
@@ -47,6 +48,36 @@ export class InteractableObject extends SceneObject {
     protected eventListeners: { [eventName in Events]: { cb: EventCb; opts: Partial<EventOpts>; }[] } = {
         'collision': [],
         'collisionSceneBoundary': [],
+        'velocityChange': [],
+    };
+    
+    /** velocity getter
+     * @description Provides the ability to set a velocity vector using traditional methods while still triggering the
+     * velocityChange event. Also provides a convenient way to set both velocity vectors.
+     */
+    get velocity(): Velocity & { set: InteractableObject['setVelocity'] } {
+        
+        const target = {
+            ...this._velocity,
+            set: this.setVelocity,
+        };
+        
+        const handler: ProxyHandler<typeof target> = {
+            set: (_target, prop, value) => {
+                if (prop === "vx" || prop === "vy") {
+                    const prevValue = this._velocity[prop];
+                    this._velocity[prop] = value;
+                    if (this._velocity[prop] !== prevValue) {
+                        this.dispatchEvent('velocityChange', this, [prop]);
+                    }
+                }
+                return true;
+            }
+        };
+        
+        const proxy = new Proxy(target, handler);
+        
+        return proxy;
     };
     
     move(delta: number, tileSize: number) {
@@ -128,6 +159,18 @@ export class InteractableObject extends SceneObject {
             }
             this.boundingBox[prop] = val;
         }
+    }
+    
+    setVelocity(velocity: Partial<Velocity>) {
+        const prevVelocity = { ...this.velocity };
+        this._velocity = { ...this._velocity, ...velocity };
+        if (this._velocity.vx !== prevVelocity.vx || this._velocity.vy !== prevVelocity.vy) {
+            const changes: string[] = [];
+            if (this._velocity.vx !== prevVelocity.vx) { changes.push('vx'); }
+            if (this._velocity.vy !== prevVelocity.vy) { changes.push('vy'); }
+            this.dispatchEvent('velocityChange', this, changes);
+        }
+        return this.velocity;
     }
     
     addEventListener(type: Events, listener: EventCb, opts?: Partial<EventOpts>) {

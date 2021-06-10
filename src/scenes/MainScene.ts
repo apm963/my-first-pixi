@@ -10,7 +10,7 @@ import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture
 import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
-import { InteractableObject } from "../InteractableObject";
+import { InteractableObject, Velocity } from "../InteractableObject";
 import { SceneObject } from "../SceneObject";
 
 
@@ -201,6 +201,18 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         actions.push(doorAction);
         
+        // ** Characters
+        const handleCharacterFacingDirection = (char: CharacterObject, changedVectors: (keyof Velocity)[]) => {
+            if (!changedVectors.includes('vx')) {
+                return;
+            }
+            const charSprite = char.mirrorTarget;
+            if (Math.abs(char.velocity.vx) > 0 && (charSprite?.scale.x ?? 0) !== Math.sign(char.velocity.vx)) {
+                // Change character's direction
+                char.mirrorX();
+            }
+        };
+        
         // Add player character
         const playerContainer = new Container();
         playerContainer.zIndex = 11; // This goes above the wall, floor, and npc sprites
@@ -222,6 +234,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerChar.velocity.vy = 0;
         playerChar.maxVelocity.vx = playerMaxVelocity;
         playerChar.maxVelocity.vy = playerMaxVelocity;
+        playerChar.addEventListener('velocityChange', handleCharacterFacingDirection);
         
         // Add NPCs
         const npcContainer = new Container();
@@ -231,12 +244,15 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcSprite.anchor.set(0.5, 0.5);
         npcSprite.scale.x *= -1;
         npcSprite.position.set(...calcCenter(null, playerSprite));
-        npcContainer.position.set(...calcScaledPos((mapSize.width - 4), 0, tileSize));
+        npcContainer.position.set(...calcScaledPos((mapSize.width - 4), 4, tileSize));
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         
-        const npcChar = new CharacterObject({item: npcContainer});
-        npcChar.setBoundingBox({ x: npcContainer.x + 3, width: tileSize - 6, height: 10 }, {mode: 'absolute'});
+        const npcChar = new CharacterObject({ item: npcContainer, mirrorTarget: npcSprite });
+        npcChar.setBoundingBox({ x: 3, width: -6, height: -4 }, {mode: 'offset', target: npcSprite});
+        npcChar.velocity.vx = -0.02;
+        npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
+        npcChar.addEventListener('velocityChange', handleCharacterFacingDirection);
         npcChar.addTo(sceneContainer);
         
         
