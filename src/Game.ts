@@ -1,6 +1,6 @@
 import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
 import { calcCenter } from "./utils";
-import { InteractableObject } from "./InteractableObject";
+import { InteractableObject, Velocity } from "./InteractableObject";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
@@ -118,15 +118,22 @@ export class Game {
         
         const { playerMaxVelocity } = Game;
         
-        arrowUp.press = wKey.press = () => playerChar.velocity.vy -= playerMaxVelocity;
-        arrowUp.release = wKey.release = () => playerChar.velocity.vy -= -playerMaxVelocity;
-        arrowDown.press = sKey.press = () => playerChar.velocity.vy += playerMaxVelocity;
-        arrowDown.release = sKey.release = () => playerChar.velocity.vy += -playerMaxVelocity;
+        const keyboardPlayerVelocity: Velocity = {vx: 0, vy: 0};
         
-        arrowRight.press = dKey.press = () => playerChar.velocity.vx += playerMaxVelocity;
-        arrowRight.release = dKey.release = () => playerChar.velocity.vx += -playerMaxVelocity;
-        arrowLeft.press = aKey.press = () => playerChar.velocity.vx -= playerMaxVelocity;
-        arrowLeft.release = aKey.release = () => playerChar.velocity.vx -= -playerMaxVelocity;
+        const changeVelocityCircular = (axis: keyof Velocity, amount: number) => {
+            keyboardPlayerVelocity[axis] += amount;
+            playerChar.velocity.set(InteractableObject.getSmoothVelocityCircular(keyboardPlayerVelocity));
+        }
+        
+        arrowUp.press = wKey.press = () => changeVelocityCircular('vy', -playerMaxVelocity);
+        arrowUp.release = wKey.release = () => changeVelocityCircular('vy', playerMaxVelocity);
+        arrowDown.press = sKey.press = () => changeVelocityCircular('vy', playerMaxVelocity);
+        arrowDown.release = sKey.release = () => changeVelocityCircular('vy', -playerMaxVelocity);
+        
+        arrowRight.press = dKey.press = () => changeVelocityCircular('vx', playerMaxVelocity);
+        arrowRight.release = dKey.release = () => changeVelocityCircular('vx', -playerMaxVelocity);
+        arrowLeft.press = aKey.press = () => changeVelocityCircular('vx', -playerMaxVelocity);
+        arrowLeft.release = aKey.release = () => changeVelocityCircular('vx', playerMaxVelocity);
         
         minusKey.press = () => setZoom(this.worldScale - 0.5);
         equalsKey.press = () => setZoom(this.worldScale + 0.5);
