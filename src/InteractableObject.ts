@@ -203,8 +203,8 @@ export class InteractableObject extends SceneObject {
         }
     }
     
-    dispatchCollisionEvent(collidingObjects: InteractableObject[], collisionInfo: CollisionInfo) {
-        this.dispatchEvent('collision', collidingObjects, collisionInfo);
+    dispatchCollisionEvent(collisionInfo: CollisionInfo) {
+        this.dispatchEvent('collision', collisionInfo);
     }
     
     static calculateBoundingBoxOffset(boundingBox: Dimensions, originObj: {x: number, y: number}): Dimensions {

@@ -10,7 +10,7 @@ import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture
 import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
-import { InteractableObject, Velocity } from "../InteractableObject";
+import { CollisionInfo, InteractableObject, Velocity } from "../InteractableObject";
 import { SceneObject } from "../SceneObject";
 
 
@@ -174,8 +174,12 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const doorTiles = [...wallUpperSprites, ...wallLowerSprites]
             .filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName)));
         
-        const actionOpenDoor = (collisionItems: InteractableObject[]) => {
+        const actionOpenDoor = (collisionInfo: CollisionInfo) => {
             if (doorOpen) { return; }
+            const collisionItems: (Container | InteractableObject)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+                collisionItemsOnSide.forEach(item => carry.push(item));
+                return carry;
+            }, []);
             if (!collisionItems.includes(playerChar)) { return; }
             doorTiles
                 .forEach(sprite => {
@@ -258,9 +262,12 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         let npcWalkPauseTimeout: null | number = null;
         let npcPreCollisionVx: number = 0;
         
-        npcChar.addEventListener('collision', (items: InteractableObject[]) => {
-            const [item] = items;
-            if (item !== playerChar) {
+        npcChar.addEventListener('collision', (collisionInfo: CollisionInfo) => {
+            const collisionItems: (Container | InteractableObject)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+                collisionItemsOnSide.forEach(item => carry.push(item));
+                return carry;
+            }, []);
+            if (!collisionItems.includes(playerChar)) {
                 // Probably a wall; reverse!
                 npcChar.velocity.vx *= -1;
                 return;

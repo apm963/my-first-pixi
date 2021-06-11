@@ -415,7 +415,7 @@ export class Game {
                 
                 // TODO: Move this outside of here; probably to play state. Also trigger dispatchCollisionEvent with the entirety of the collisionObject
                 if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
-                    collisionCheckItem.dispatchCollisionEvent([container], collisionInfo);
+                    collisionCheckItem.dispatchCollisionEvent(collisionInfo);
                 }
             }
         }
