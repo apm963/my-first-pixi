@@ -228,10 +228,9 @@ export class Game {
             currentScene.items.npcChar,
             currentScene.items.torch.base,
         ];
-        const collisionInfoDict: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
+        const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         
-        const playerCheckItemIndex = collisionCheckItems.findIndex(item => item === playerChar);
-        const playerCollisionInfo = collisionInfoDict[playerCheckItemIndex] ?? null;
+        const playerCollisionInfo = computedCollisionInfo.filter(collisionInfo => collisionInfo.entity === playerChar)[0];
         
         // Handle collisions
         if (playerCollisionInfo && playerCollisionInfo.occurred) {
@@ -377,16 +376,20 @@ export class Game {
         });
         
         if (unmovedCollisionCheckItems.length > 0) {
-            // TODO: Merge this with the results. This will also require tweaking the contents of CollisionInfo so this doens't need to purely be treated as a dict
-            unmovedCollisionCheckItems.map(unmovedCollisionCheckItem => this.checkCollision(unmovedCollisionCheckItem, allObjectsToCheck));
+            // Compute inverse collisions (for entities that were *collided with* but not otherwise checked for collision) and add to the collision detection array
+            collisionDict = [
+                ...collisionDict,
+                ...unmovedCollisionCheckItems.map(unmovedCollisionCheckItem => this.checkCollision(unmovedCollisionCheckItem, allObjectsToCheck))
+            ];
         }
         
         return collisionDict;
     }
     
-    checkCollision(collisionCheckItem: (Container | InteractableObject), allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo {
+    checkCollision(collisionCheckItem: Container | InteractableObject, allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo {
         
         const collisionInfo: CollisionInfo = {
+            entity: collisionCheckItem,
             occurred: false,
             sideOfEntityBit: 0b0,
             collisions: {},

@@ -8,6 +8,7 @@ export interface Velocity {
 }
 
 export type CollisionInfo = {
+    entity: (Container | InteractableObject);
     occurred: boolean;
     sideOfEntityBit: number;
     collisions: { [directionBit: number]: (Container | InteractableObject)[] };
