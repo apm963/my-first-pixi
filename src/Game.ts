@@ -230,6 +230,20 @@ export class Game {
         ];
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         
+        // Dispatch collision events
+        computedCollisionInfo
+            .filter(collisionInfo => collisionInfo.occurred)
+            .forEach(collisionInfo => {
+                const collisionCheckItem = collisionInfo.entity;
+                const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+                    collisionItemsOnSide.forEach(item => carry.push(item));
+                    return carry;
+                }, []);
+                if (collisionCheckItem instanceof InteractableEntity && collisionItems.some(container => container instanceof InteractableEntity)) {
+                    collisionCheckItem.dispatchCollisionEvent(collisionInfo);
+                }
+            });
+        
         const playerCollisionInfo = computedCollisionInfo.filter(collisionInfo => collisionInfo.entity === playerChar)[0];
         
         // Handle collisions
@@ -351,6 +365,12 @@ export class Game {
         // Do nothing for now
     }
     
+    /**
+     * Check collisions across a list of items
+     * @param collisionCheckItems An array of items to perform collision checks on
+     * @param allObjectsToCheck An array of objects to check collisions from collisionCheckItems against
+     * @returns An array of collision details. This will not always have the same index mapping to the source collisionCheckItems array.
+     */
     checkCollisions(collisionCheckItems: (Container | InteractableEntity)[], allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo[] {
         let collisionDict = collisionCheckItems.map(collisionCheckItem => this.checkCollision(collisionCheckItem, allObjectsToCheck));
         
@@ -386,6 +406,12 @@ export class Game {
         return collisionDict;
     }
     
+    /**
+     * Checks for collisions between an item and a list of objects
+     * @param collisionCheckItem The item to check collisions from
+     * @param allObjectsToCheck A list of items to check if the collisionCheckItem collided with
+     * @returns Collision check results
+     */
     checkCollision(collisionCheckItem: Container | InteractableEntity, allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo {
         
         const collisionInfo: CollisionInfo = {
@@ -412,11 +438,6 @@ export class Game {
                 collisionInfo.sideOfEntityBit |= sideOfEntityBit;
                 collisionInfo.collisions[sideOfEntityBit] = collisionInfo.collisions[sideOfEntityBit] ?? [];
                 collisionInfo.collisions[sideOfEntityBit].push('item' in container ? container : container);
-                
-                // TODO: Move this outside of here; probably to play state. Also trigger dispatchCollisionEvent with the entirety of the collisionObject
-                if (collisionCheckItem instanceof InteractableEntity && container instanceof InteractableEntity) {
-                    collisionCheckItem.dispatchCollisionEvent(collisionInfo);
-                }
             }
         }
         
