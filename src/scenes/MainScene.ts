@@ -232,7 +232,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerBoundingBoxDebugOverlay.zIndex = 12;
         playerBoundingBoxDebugOverlay.visible = false;
         
-        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite });
+        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar' });
         playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
         playerChar.addTo(sceneContainer);
         playerChar.velocity.vx = 0;
@@ -253,7 +253,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         
-        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite });
+        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar' });
         npcChar.setBoundingBox({ x: 3, width: -6, height: -4 }, {mode: 'offset', target: npcSprite});
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);

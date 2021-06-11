@@ -1,6 +1,7 @@
 // import { Container, DisplayObject } from "@pixi/display";
 // import { Sprite } from "@pixi/sprite";
 import { Container, DisplayObject, Sprite } from 'pixi.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Dimensions {
     width: number;
@@ -20,6 +21,8 @@ type Geometry = PartialDimensions & { zIndex: null | number; };
 
 interface Opts {
     item?: SceneEntity['item'];
+    /** @description Used to identify this specific entity instance. Useful for debugging */
+    name?: SceneEntity['name'];
     bindZToY?: SceneEntity['bindZToY'];
     forceZInt?: SceneEntity['forceZInt'];
     geometry?: PartialDimensions;
@@ -39,6 +42,7 @@ export class SceneEntity {
     bindZToY: boolean = false;
     forceZInt: boolean = false; // REVIEW: Current technique is Math.round. Reevaluate if this is desired (or desired as a setting)
     item: null | DisplayObject | Sprite | Container = null;
+    name: string = uuidv4();
     mirrorTarget: null | Sprite = null;
     
     get width(): number {
@@ -87,9 +91,7 @@ export class SceneEntity {
     }
     
     constructor(opts: Opts = {}) {
-        Object.entries(opts).forEach(([key, val]) => {
-            this[key as keyof Opts] = val;
-        });
+        Object.entries(opts).forEach(([key, val]) => this[key as keyof this] = val);
     }
     
     /** @description A helper method to get dimensions. Do not use this for setting. */
