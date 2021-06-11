@@ -1,11 +1,11 @@
 import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
 import { calcCenter } from "./utils";
-import { InteractableObject, Velocity, CollisionInfo } from "./InteractableObject";
+import { InteractableEntity, Velocity, CollisionInfo } from "./InteractableEntity";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
 import { HitRectangle, hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
-import { Dimensions } from "./SceneObject";
+import { Dimensions } from "./SceneEntity";
 
 // TODO: Move these to this.loader
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
@@ -122,7 +122,7 @@ export class Game {
         
         const changeVelocityCircular = (axis: keyof Velocity, amount: number) => {
             keyboardPlayerVelocity[axis] += amount;
-            playerChar.velocity.set(InteractableObject.getSmoothVelocityCircular(keyboardPlayerVelocity));
+            playerChar.velocity.set(InteractableEntity.getSmoothVelocityCircular(keyboardPlayerVelocity));
         }
         
         arrowUp.press = wKey.press = () => changeVelocityCircular('vy', -playerMaxVelocity);
@@ -187,17 +187,17 @@ export class Game {
         const sceneItems = currentScene.getItemsFlat();
         
         // Move
-        const movedItems = sceneItems.filter(item => item instanceof InteractableObject && item.move(delta, tileSize));
+        const movedItems = sceneItems.filter(item => item instanceof InteractableEntity && item.move(delta, tileSize));
         
         // Cap movement to playable area based on bounding box
         movedItems.forEach(item => {
             const boundingBox: Dimensions = (
-                item instanceof InteractableObject
+                item instanceof InteractableEntity
                 ? item.getBoundingBox()
                 : item
             );
             const boundingBoxOffset: Dimensions = (
-                item instanceof InteractableObject
+                item instanceof InteractableEntity
                 ? item.calculateBoundingBoxOffsetFromOrigin(boundingBox)
                 : {width: item.width, height: item.height, x: 0, y: 0}
             );
@@ -208,7 +208,7 @@ export class Game {
             item.x = Math.max(boundingBoxOffset.x, Math.min(item.x, mapDims.width - boundingBox.width + boundingBoxOffset.x));
             item.y = Math.max(boundingBoxOffset.y, Math.min(item.y, mapDims.height - boundingBox.height + boundingBoxOffset.y));
             
-            if ((item.x !== oldCoords.x || item.y !== oldCoords.y) && item instanceof InteractableObject) {
+            if ((item.x !== oldCoords.x || item.y !== oldCoords.y) && item instanceof InteractableEntity) {
                 // Trigger special collision event
                 item.dispatchEvent('collisionSceneBoundary', {
                     x: boundingBoxOffset.x,
@@ -221,7 +221,7 @@ export class Game {
         
         // Check collisions
         const collisionCheckItems = [...movedItems, ...currentScene.items.actions];
-        const objectsToCheck: (DisplayObject | InteractableObject)[] = [
+        const objectsToCheck: (DisplayObject | InteractableEntity)[] = [
             // TODO: Genericize this
             ...currentScene.items.walls[0].children,
             currentScene.items.playerChar,
@@ -351,10 +351,10 @@ export class Game {
         // Do nothing for now
     }
     
-    checkCollisions(collisionCheckItems: (Container | InteractableObject)[], allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo[] {
+    checkCollisions(collisionCheckItems: (Container | InteractableEntity)[], allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo[] {
         let collisionDict = collisionCheckItems.map(collisionCheckItem => this.checkCollision(collisionCheckItem, allObjectsToCheck));
         
-        const unmovedCollisionCheckItems: (Container | InteractableObject)[] = [];
+        const unmovedCollisionCheckItems: (Container | InteractableEntity)[] = [];
         
         collisionDict.forEach((collisionInfo, i) => {
             if (!collisionInfo.occurred) {
@@ -363,7 +363,7 @@ export class Game {
             const collisionCheckItem = collisionCheckItems[i];
             // Go through all detected collisions to determine if the items they collided with also need to have collisions computed (the inverse)
             Object.values(collisionInfo.collisions).forEach((objs) => objs.forEach(container => {
-                if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
+                if (collisionCheckItem instanceof InteractableEntity && container instanceof InteractableEntity) {
                     // Only add this if it wouldn't otherwise have been part of the collisionCheckItems
                     if (!collisionCheckItems.includes(container)) {
                         // Only add this once to the recheck array (in case multiple objects collided with it)
@@ -386,7 +386,7 @@ export class Game {
         return collisionDict;
     }
     
-    checkCollision(collisionCheckItem: Container | InteractableObject, allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo {
+    checkCollision(collisionCheckItem: Container | InteractableEntity, allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo {
         
         const collisionInfo: CollisionInfo = {
             entity: collisionCheckItem,
@@ -401,7 +401,7 @@ export class Game {
         
         // Solid collisions
         for (const i in objectsToCheck) {
-            const container = objectsToCheck[i] as Container | InteractableObject;
+            const container = objectsToCheck[i] as Container | InteractableEntity;
             const targetBoundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
             if ('visible' in container ? !container.visible : container.item?.visible === false) {
                 continue;
@@ -414,7 +414,7 @@ export class Game {
                 collisionInfo.collisions[sideOfEntityBit].push('item' in container ? container : container);
                 
                 // TODO: Move this outside of here; probably to play state. Also trigger dispatchCollisionEvent with the entirety of the collisionObject
-                if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
+                if (collisionCheckItem instanceof InteractableEntity && container instanceof InteractableEntity) {
                     collisionCheckItem.dispatchCollisionEvent(collisionInfo);
                 }
             }

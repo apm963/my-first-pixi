@@ -1,6 +1,6 @@
 import { Container } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
-import { Dimensions, PartialDimensions, SceneObject } from "./SceneObject";
+import { Dimensions, PartialDimensions, SceneEntity } from "./SceneEntity";
 
 export interface Velocity {
     vx: number;
@@ -8,10 +8,10 @@ export interface Velocity {
 }
 
 export type CollisionInfo = {
-    entity: (Container | InteractableObject);
+    entity: (Container | InteractableEntity);
     occurred: boolean;
     sideOfEntityBit: number;
-    collisions: { [directionBit: number]: (Container | InteractableObject)[] };
+    collisions: { [directionBit: number]: (Container | InteractableEntity)[] };
 };
 
 /**
@@ -27,7 +27,7 @@ interface EventOpts {
     once: boolean;
 };
 
-export class InteractableObject extends SceneObject {
+export class InteractableEntity extends SceneEntity {
     
     protected boundingBoxMode: BoundingBoxMode = 'absolute';
     
@@ -62,7 +62,7 @@ export class InteractableObject extends SceneObject {
      * @description Provides the ability to set a velocity vector using traditional methods while still triggering the
      * velocityChange event. Also provides a convenient way to set both velocity vectors.
      */
-    get velocity(): Velocity & { set: InteractableObject['setVelocity'] } {
+    get velocity(): Velocity & { set: InteractableEntity['setVelocity'] } {
         
         const target = {
             ...this._velocity,
@@ -151,7 +151,7 @@ export class InteractableObject extends SceneObject {
     }
     
     calculateBoundingBoxOffsetFromOrigin(boundingBox: Dimensions): Dimensions {
-        return InteractableObject.calculateBoundingBoxOffset(boundingBox, this);
+        return InteractableEntity.calculateBoundingBoxOffset(boundingBox, this);
     }
     
     setBoundingBox(dims: Partial<PartialDimensions>, opts: Partial<{ mode: BoundingBoxMode; target: Sprite; boundingBoxDebugOverlay: Sprite; }> = {}) {

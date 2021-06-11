@@ -1,6 +1,6 @@
-import { InteractableObject } from "./InteractableObject";
+import { InteractableEntity } from "./InteractableEntity";
 
-export class CharacterObject extends InteractableObject {
+export class CharacterEntity extends InteractableEntity {
     
     inventory: any[] = []; // TODO: Define this spec
     // REVIEW: Should we add dialog?

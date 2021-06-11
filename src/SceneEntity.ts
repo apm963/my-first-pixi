@@ -19,14 +19,14 @@ export interface PartialDimensions {
 type Geometry = PartialDimensions & { zIndex: null | number; };
 
 interface Opts {
-    item?: SceneObject['item'];
-    bindZToY?: SceneObject['bindZToY'];
-    forceZInt?: SceneObject['forceZInt'];
+    item?: SceneEntity['item'];
+    bindZToY?: SceneEntity['bindZToY'];
+    forceZInt?: SceneEntity['forceZInt'];
     geometry?: PartialDimensions;
-    mirrorTarget?: SceneObject['mirrorTarget'];
+    mirrorTarget?: SceneEntity['mirrorTarget'];
 }
 
-export class SceneObject {
+export class SceneEntity {
     
     protected geometry: Geometry = {
         width: null,
@@ -97,7 +97,7 @@ export class SceneObject {
         return {...this.geometry};
     }
     
-    protected setDimension(geometry: keyof SceneObject['geometry'], val: number) {
+    protected setDimension(geometry: keyof SceneEntity['geometry'], val: number) {
         
         if (geometry === 'zIndex' && this.forceZInt) {
             val = Math.round(val);

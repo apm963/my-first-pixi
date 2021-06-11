@@ -1,5 +1,5 @@
 import { Container } from "@pixi/display";
-import { CharacterObject } from "../CharacterObject";
+import { CharacterEntity } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 
@@ -10,24 +10,24 @@ import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture
 import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
-import { CollisionInfo, InteractableObject, Velocity } from "../InteractableObject";
-import { SceneObject } from "../SceneObject";
+import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
+import { SceneEntity } from "../SceneEntity";
 
 
 
 
 type SceneObjects = {
-    playerChar: CharacterObject;
-    npcChar: CharacterObject;
+    playerChar: CharacterEntity;
+    npcChar: CharacterEntity;
     floor: Container;
     walls: (Sprite | Container)[]; // TODO: Make InteractableObject
     door: Sprite[]; // TODO: Make InteractableObject
     torch: {
-        base: InteractableObject;
+        base: InteractableEntity;
         fire: Container;
         fireEmitter: particles.Emitter;
     };
-    actions: InteractableObject[];
+    actions: InteractableEntity[];
 };
 
 export class MainScene extends GameSceneBase implements GameSceneIface<SceneObjects> {
@@ -49,7 +49,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
     }
     
-    getItemsFlat(): (Container | InteractableObject /* | SceneObject */)[] {
+    getItemsFlat(): (Container | InteractableEntity /* | SceneObject */)[] {
         return [
             this.items.playerChar,
             this.items.npcChar,
@@ -111,7 +111,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             .fill(null)
             .map(() => Array(mapSize.width).fill('floorTile'));
         
-        const actions: InteractableObject[] = [];
+        const actions: InteractableEntity[] = [];
         
         // Convert some to tiles to dirt floor
         backgroundFloorMap[0] = ['floorDirtTopLeft', ...Array(mapSize.width - 2).fill('floorDirtTop'), 'floorDirtTopRight'];
@@ -176,7 +176,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         const actionOpenDoor = (collisionInfo: CollisionInfo) => {
             if (doorOpen) { return; }
-            const collisionItems: (Container | InteractableObject)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
                 collisionItemsOnSide.forEach(item => carry.push(item));
                 return carry;
             }, []);
@@ -197,7 +197,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             doorOpen = true;
         };
         
-        const doorAction = new InteractableObject();
+        const doorAction = new InteractableEntity();
         doorAction.x = Math.min(...doorTiles.map(doorTile => doorTile.x));
         doorAction.y = Math.max(...doorTiles.map(doorTile => doorTile.y + doorTile.height));
         doorAction.width = tileSize * 2;
@@ -207,7 +207,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         actions.push(doorAction);
         
         // ** Characters
-        const handleCharacterFacingDirection = (char: CharacterObject, changedVectors: (keyof Velocity)[]) => {
+        const handleCharacterFacingDirection = (char: CharacterEntity, changedVectors: (keyof Velocity)[]) => {
             if (!changedVectors.includes('vx')) {
                 return;
             }
@@ -232,7 +232,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerBoundingBoxDebugOverlay.zIndex = 12;
         playerBoundingBoxDebugOverlay.visible = false;
         
-        const playerChar = new CharacterObject({ item: playerContainer, mirrorTarget: playerSprite });
+        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite });
         playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
         playerChar.addTo(sceneContainer);
         playerChar.velocity.vx = 0;
@@ -253,7 +253,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         
-        const npcChar = new CharacterObject({ item: npcContainer, mirrorTarget: npcSprite });
+        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite });
         npcChar.setBoundingBox({ x: 3, width: -6, height: -4 }, {mode: 'offset', target: npcSprite});
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
@@ -263,7 +263,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         let npcPreCollisionVx: number = 0;
         
         npcChar.addEventListener('collision', (collisionInfo: CollisionInfo) => {
-            const collisionItems: (Container | InteractableObject)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
                 collisionItemsOnSide.forEach(item => carry.push(item));
                 return carry;
             }, []);
@@ -295,7 +295,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         torchSprite.position.set(7 * tileSize, 3 * tileSize);
         torchSprite.zIndex = 8;
         
-        const torchObj = new InteractableObject({ item: torchSprite });
+        const torchObj = new InteractableEntity({ item: torchSprite });
         torchObj.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
         torchObj.addTo(sceneContainer);
         
