@@ -7,6 +7,12 @@ export interface Velocity {
     vy: number;
 }
 
+export type CollisionInfo = {
+    occurred: boolean;
+    sideOfEntityBit: number;
+    collisions: { [directionBit: number]: (Container | InteractableObject)[] };
+};
+
 /**
  * @description The modifier that is applied to the specified bounding box.
  * When set to 'relative', the coords (x, y) are relative to the Object's coords but the size (width, height) is absolute.
@@ -196,8 +202,8 @@ export class InteractableObject extends SceneObject {
         }
     }
     
-    dispatchCollisionEvent(collidingObjects: InteractableObject[]) {
-        this.dispatchEvent('collision', collidingObjects);
+    dispatchCollisionEvent(collidingObjects: InteractableObject[], collisionInfo: CollisionInfo) {
+        this.dispatchEvent('collision', collidingObjects, collisionInfo);
     }
     
     static calculateBoundingBoxOffset(boundingBox: Dimensions, originObj: {x: number, y: number}): Dimensions {

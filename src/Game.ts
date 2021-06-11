@@ -1,6 +1,6 @@
 import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
 import { calcCenter } from "./utils";
-import { InteractableObject, Velocity } from "./InteractableObject";
+import { InteractableObject, Velocity, CollisionInfo } from "./InteractableObject";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
@@ -12,12 +12,6 @@ const loader = Loader.shared; // or create a dedicated one with `new Loader()`
 const resources = loader.resources;
 
 type GameState = (delta: number) => void;
-
-type CollisionInfo = {
-    occurred: boolean;
-    sideOfPlayerBit: number;
-    collisions: { [directionBit: number]: (Container | InteractableObject)[] };
-};
 
 export class Game {
     
@@ -234,7 +228,7 @@ export class Game {
             currentScene.items.npcChar,
             currentScene.items.torch.base,
         ];
-        const collisionInfoDict: CollisionInfo[] = this.checkCollisions(collisionCheckItems, movedItems, objectsToCheck);
+        const collisionInfoDict: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         
         const playerCheckItemIndex = collisionCheckItems.findIndex(item => item === playerChar);
         const playerCollisionInfo = collisionInfoDict[playerCheckItemIndex] ?? null;
@@ -253,7 +247,7 @@ export class Game {
             // Reverse player's position so it no longer intersects with the object it is colliding with
             let recalculatePlayerBoundingBox = false;
             
-            if (playerChar.velocity.vx <= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_LEFT) {
+            if (playerChar.velocity.vx <= 0 && playerCollisionInfo.sideOfEntityBit & HIT_LEFT) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -262,7 +256,7 @@ export class Game {
                 })), playerChar.x) + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy <= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_UP) {
+            if (playerChar.velocity.vy <= 0 && playerCollisionInfo.sideOfEntityBit & HIT_UP) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -278,7 +272,7 @@ export class Game {
                 recalculatePlayerBoundingBox = false;
             }
             
-            if (playerChar.velocity.vx >= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_RIGHT) {
+            if (playerChar.velocity.vx >= 0 && playerCollisionInfo.sideOfEntityBit & HIT_RIGHT) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -287,7 +281,7 @@ export class Game {
                 })), playerChar.x + playerBoundingBox.width - playerBoundingBoxOffset.x) - playerBoundingBox.width + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy >= 0 && playerCollisionInfo.sideOfPlayerBit & HIT_DOWN) {
+            if (playerChar.velocity.vy >= 0 && playerCollisionInfo.sideOfEntityBit & HIT_DOWN) {
                 recalculatePlayerBoundingBox = true;
                 playerChar.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -358,46 +352,72 @@ export class Game {
         // Do nothing for now
     }
     
-    checkCollisions(collisionCheckItems: (Container | InteractableObject)[], movedItems: (Container | InteractableObject)[], allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo[] {
-        return collisionCheckItems.map((collisionCheckItem, i) => {
-            
-            const collisionInfoRef: CollisionInfo = {
-                occurred: false,
-                sideOfPlayerBit: 0b0,
-                collisions: [],
-            };
-            
-            const objectsToCheck = allObjectsToCheck.filter(item => item !== collisionCheckItem);
-            
-            let sourceBoundingBox = 'getBoundingBox' in collisionCheckItem ? collisionCheckItem.getBoundingBox() : collisionCheckItem;
-            
-            // Solid collisions
-            for (const i in objectsToCheck) {
-                const container = objectsToCheck[i] as Container | InteractableObject;
-                const targetBoundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                if ('visible' in container ? !container.visible : container.item?.visible === false) {
-                    continue;
-                }
-                const [isCollision, sideOfPlayerBit] = hitTestRectangle(sourceBoundingBox, targetBoundingBox);
-                if (isCollision) {
-                    collisionInfoRef.occurred = true;
-                    collisionInfoRef.sideOfPlayerBit |= sideOfPlayerBit;
-                    collisionInfoRef.collisions[sideOfPlayerBit] = collisionInfoRef.collisions[sideOfPlayerBit] ?? [];
-                    collisionInfoRef.collisions[sideOfPlayerBit].push('item' in container ? container : container);
-                    
-                    if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
-                        collisionCheckItem.dispatchCollisionEvent([container]);
-                        // Trigger the inverse as well if the target is stationary (otherwise a moving target will get dispatched twice)
-                        if (!movedItems.includes(container)) {
-                            container.dispatchCollisionEvent([collisionCheckItem]);
+    checkCollisions(collisionCheckItems: (Container | InteractableObject)[], allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo[] {
+        let collisionDict = collisionCheckItems.map(collisionCheckItem => this.checkCollision(collisionCheckItem, allObjectsToCheck));
+        
+        const unmovedCollisionCheckItems: (Container | InteractableObject)[] = [];
+        
+        collisionDict.forEach((collisionInfo, i) => {
+            if (!collisionInfo.occurred) {
+                return;
+            }
+            const collisionCheckItem = collisionCheckItems[i];
+            // Go through all detected collisions to determine if the items they collided with also need to have collisions computed (the inverse)
+            Object.values(collisionInfo.collisions).forEach((objs) => objs.forEach(container => {
+                if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
+                    // Only add this if it wouldn't otherwise have been part of the collisionCheckItems
+                    if (!collisionCheckItems.includes(container)) {
+                        // Only add this once to the recheck array (in case multiple objects collided with it)
+                        if (!unmovedCollisionCheckItems.includes(container)) {
+                            unmovedCollisionCheckItems.push(container);
                         }
                     }
-                    // break;
+                }
+            }))
+        });
+        
+        if (unmovedCollisionCheckItems.length > 0) {
+            // TODO: Merge this with the results. This will also require tweaking the contents of CollisionInfo so this doens't need to purely be treated as a dict
+            unmovedCollisionCheckItems.map(unmovedCollisionCheckItem => this.checkCollision(unmovedCollisionCheckItem, allObjectsToCheck));
+        }
+        
+        return collisionDict;
+    }
+    
+    checkCollision(collisionCheckItem: (Container | InteractableObject), allObjectsToCheck: (InteractableObject | DisplayObject)[]): CollisionInfo {
+        
+        const collisionInfo: CollisionInfo = {
+            occurred: false,
+            sideOfEntityBit: 0b0,
+            collisions: {},
+        };
+        
+        const objectsToCheck = allObjectsToCheck.filter(item => item !== collisionCheckItem);
+        
+        let sourceBoundingBox = 'getBoundingBox' in collisionCheckItem ? collisionCheckItem.getBoundingBox() : collisionCheckItem;
+        
+        // Solid collisions
+        for (const i in objectsToCheck) {
+            const container = objectsToCheck[i] as Container | InteractableObject;
+            const targetBoundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
+            if ('visible' in container ? !container.visible : container.item?.visible === false) {
+                continue;
+            }
+            const [isCollision, sideOfEntityBit] = hitTestRectangle(sourceBoundingBox, targetBoundingBox);
+            if (isCollision) {
+                collisionInfo.occurred = true;
+                collisionInfo.sideOfEntityBit |= sideOfEntityBit;
+                collisionInfo.collisions[sideOfEntityBit] = collisionInfo.collisions[sideOfEntityBit] ?? [];
+                collisionInfo.collisions[sideOfEntityBit].push('item' in container ? container : container);
+                
+                // TODO: Move this outside of here; probably to play state. Also trigger dispatchCollisionEvent with the entirety of the collisionObject
+                if (collisionCheckItem instanceof InteractableObject && container instanceof InteractableObject) {
+                    collisionCheckItem.dispatchCollisionEvent([container], collisionInfo);
                 }
             }
-            
-            return collisionInfoRef;
-        });
+        }
+        
+        return collisionInfo;
     }
     
 }
