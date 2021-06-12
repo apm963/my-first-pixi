@@ -162,7 +162,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add door
         const doorContainer = new Container();
         doorContainer.position.set(4 * tileSize, 1 * tileSize);
-        doorContainer.zIndex = calcZFromGeometry(doorContainer, tileSize);
         
         const doorSprites = generateSpritesFromAtlasMap([
             ['doorTopLeft', 'doorTopRight'],
@@ -171,7 +170,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         doorSprites.forEach(doorSprite => doorContainer.addChild(doorSprite));
         
-        const doorEntity = new SceneEntity({ item: doorContainer });
+        const doorEntity = new SceneEntity({ item: doorContainer, bindZToY: true, zBindingMultiplier: 1/tileSize });
         doorEntity.addTo(sceneContainer);
         
         // Add actions (door open, etc.)

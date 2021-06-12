@@ -51,6 +51,7 @@ export function createDebugOverlay(overlayItem: Container | InteractableEntity, 
     return bg;
 }
 
-export function calcZFromGeometry(geometry: {y: number, height: number}, tileSize: number) {
-    return (geometry.y + geometry.height) / tileSize;
+export function calcZFromGeometry(geometry: {y: number, height: number}, tileSize: number, mathFloor: boolean = false) {
+    const zIndex = (geometry.y + geometry.height) / tileSize;
+    return (mathFloor ? Math.floor(zIndex) : zIndex);
 }

@@ -23,6 +23,7 @@ interface Opts {
     name?: SceneEntity['name'];
     bindZToY?: SceneEntity['bindZToY'];
     forceZInt?: SceneEntity['forceZInt'];
+    zBindingMultiplier?: SceneEntity['zBindingMultiplier'];
     geometry?: PartialDimensions;
     mirrorTarget?: SceneEntity['mirrorTarget'];
 }
@@ -39,6 +40,7 @@ export class SceneEntity {
     
     bindZToY: boolean = false;
     forceZInt: boolean = false; // REVIEW: Current technique is Math.round. Reevaluate if this is desired (or desired as a setting)
+    zBindingMultiplier: number = 1;
     item: null | DisplayObject | Sprite | Container = null;
     name: string = uuidv4();
     mirrorTarget: null | Sprite = null;
@@ -90,6 +92,10 @@ export class SceneEntity {
     
     constructor(opts: Opts = {}) {
         Object.entries(opts).forEach(([key, val]) => this[key as keyof this] = val);
+        // Force set zIndex by spoofing a y change
+        if (this.bindZToY) {
+            this.setDimension('y', this.y);
+        }
     }
     
     /** @description A helper method to get dimensions. Do not use this for setting. */
@@ -107,7 +113,8 @@ export class SceneEntity {
             // @ts-ignore The index lookup has already been established above. REVIEW: Can this be improved?
             this.item[geometry] = val;
             if (geometry === 'y' && this.bindZToY) {
-                this.item.zIndex = (this.forceZInt ? Math.round(val) : val);
+                const newZ = (this.y + this.height) * this.zBindingMultiplier;
+                this.item.zIndex = (this.forceZInt ? Math.round(newZ) : newZ);
             }
         }
         else {

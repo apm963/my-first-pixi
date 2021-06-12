@@ -1,5 +1,5 @@
 import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
-import { calcCenter } from "./utils";
+import { calcCenter, calcZFromGeometry } from "./utils";
 import { InteractableEntity, Velocity, CollisionInfo } from "./InteractableEntity";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
@@ -242,7 +242,7 @@ export class Game {
         
         // Update z-axis based on y positions
         movedItems.forEach(item => {
-            const newZ = Math.floor(item.y / tileSize) - 0.5; // The magic 0.5 is here for sort-cache-busting related reasons
+            const newZ = calcZFromGeometry(item, tileSize, true) + 0.5; // The magic 0.5 is here for sort-cache-busting related reasons
             if (newZ !== item.zIndex) {
                 item.zIndex = newZ;
             }
