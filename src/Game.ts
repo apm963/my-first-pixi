@@ -220,8 +220,7 @@ export class Game {
         });
         
         // Check collisions
-        const typeGuard = (item: InteractableEntity | SceneEntity | Container): item is (InteractableEntity | Container) => (item instanceof InteractableEntity || item instanceof Container);
-        const collisionCheckItems = [...movedItems, ...currentScene.items.actions].filter(typeGuard);
+        const collisionCheckItems = [...movedItems, ...currentScene.items.actions].filter(Game.collisionCheckTypeGuard);
         const objectsToCheck: (DisplayObject | InteractableEntity)[] = currentScene.getSolidObjects();
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
@@ -453,5 +452,7 @@ export class Game {
         }
         
     }
+    
+    static collisionCheckTypeGuard = (item: InteractableEntity | SceneEntity | Container): item is (InteractableEntity | Container) => (item instanceof InteractableEntity || item instanceof Container);
     
 }
