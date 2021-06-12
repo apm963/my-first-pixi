@@ -64,6 +64,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const { displayScalingOffset, worldScale } = game;
         const { spriteSheetTextureAtlasFiles, tileSize, playerMaxVelocity } = Game;
         const zBindingMultiplier = 1 / tileSize;
+        const charEntHitboxHeight = 6;
         
         // Create scene that contains all of the objects we want to render. This greatly simplifies scaling, positioning, and handling device pixel ratio.
         const sceneContainer = this.sceneContainer;
@@ -240,7 +241,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerContainer.addChild(playerSprite);
         
         const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar', bindZToY: true, forceZInt: true, zBindingMultiplier, zBindingOffset: 0.5 });
-        playerChar.setBoundingBox({ x: 2, width: -3 }, {
+        playerChar.setBoundingBox({ x: 2, width: -3, height: -playerChar.height + charEntHitboxHeight, y: playerChar.height - charEntHitboxHeight }, {
             mode: 'offset',
             target: playerSprite,
             boundingBoxDebugOverlay: createDebugOverlay(playerContainer, sceneContainer, { zIndex: 12, visible: false })
@@ -265,7 +266,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // createDebugOverlay(npcContainer);
         
         const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar' });
-        npcChar.setBoundingBox({ x: 3, width: -6, height: -4 }, {mode: 'offset', target: npcSprite});
+        npcChar.setBoundingBox({ x: 3, width: -6, height: -npcChar.height + charEntHitboxHeight, y: npcChar.height - charEntHitboxHeight }, {mode: 'offset', target: npcSprite});
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
         npcChar.addEventListener('velocityChange', handleCharacterFacingDirection);
