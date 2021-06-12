@@ -99,9 +99,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         }
         
         const backgroundWallMap: string[][] = [
-            // ['wallRightMiddle', ...Array(6).fill(null), 'wallTopLeft', 'wall1Top', 'wall1Top'],
-            // ['wallBottomLeftEnd', 'wall1Top', 'wall1Top', 'wallDoorLeftTop', null, null, 'wallDoorRightTop', 'wall2Left', 'wall2', 'wall2'],
-            // ['wall1Left', 'wall1', 'wall1', 'wallDoorLeft', null, null, 'wallDoorRight', 'wallEndRight'],
             ['wallRightMiddle', ...Array(6).fill(null), 'wallTopLeft', 'wall1Top', 'wall1Top'],
             ['wallBottomLeftEnd', 'wall1Top', 'wall1Top', 'wallDoorLeftTop', 'doorTopLeft', 'doorTopRight', 'wallDoorRightTop', 'wall2Left', 'wall2', 'wall2'],
             ['wall1Left', 'wall1', 'wall1', 'wallDoorLeft', 'doorBottomLeft', 'doorBottomRight', 'wallDoorRight', 'wallEndRight'],
