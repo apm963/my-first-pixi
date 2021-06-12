@@ -233,12 +233,12 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerContainer.position.set(...calcScaledPos(2, 6, tileSize));
         playerContainer.addChild(playerSprite);
         
-        const playerBoundingBoxDebugOverlay = createDebugOverlay(playerContainer, sceneContainer);
-        playerBoundingBoxDebugOverlay.zIndex = 12;
-        playerBoundingBoxDebugOverlay.visible = false;
-        
         const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar' });
-        playerChar.setBoundingBox({x: 2, width: -3}, {mode: 'offset', target: playerSprite, boundingBoxDebugOverlay: playerBoundingBoxDebugOverlay});
+        playerChar.setBoundingBox({ x: 2, width: -3 }, {
+            mode: 'offset',
+            target: playerSprite,
+            boundingBoxDebugOverlay: createDebugOverlay(playerContainer, sceneContainer, { zIndex: 12, visible: false })
+        });
         playerChar.addTo(sceneContainer);
         playerChar.velocity.vx = 0;
         playerChar.velocity.vy = 0;

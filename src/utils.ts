@@ -31,12 +31,13 @@ export function randomTrue(chanceFloat: number) {
     return Math.random() < chanceFloat;
 }
 
-export function createDebugOverlay(overlayItem: Container, addToContainer?: Container): Sprite {
+export function createDebugOverlay(overlayItem: Container, addToContainer?: Container, opts?: Partial<Sprite>): Sprite {
     const bg = new Sprite(Texture.WHITE);
     bg.width = overlayItem.width;
     bg.height = overlayItem.height;
     bg.tint = 0xff0000;
     bg.alpha = 0.3;
+    Object.entries(opts ?? {}).forEach(([key, val]) => (bg[key as keyof typeof opts] as any) = val);
     (addToContainer ?? overlayItem).addChild(bg);
     return bg;
 }
