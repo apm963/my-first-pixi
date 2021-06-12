@@ -63,6 +63,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const { mapSize } = MainScene;
         const { displayScalingOffset, worldScale } = game;
         const { spriteSheetTextureAtlasFiles, tileSize, playerMaxVelocity } = Game;
+        const zBindingMultiplier = 1 / tileSize;
         
         // Create scene that contains all of the objects we want to render. This greatly simplifies scaling, positioning, and handling device pixel ratio.
         const sceneContainer = this.sceneContainer;
@@ -170,7 +171,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         doorSprites.forEach(doorSprite => doorContainer.addChild(doorSprite));
         
-        const doorEntity = new SceneEntity({ item: doorContainer, bindZToY: true, zBindingMultiplier: 1/tileSize });
+        const doorEntity = new SceneEntity({ item: doorContainer, bindZToY: true, zBindingMultiplier });
         doorEntity.addTo(sceneContainer);
         
         // Add actions (door open, etc.)
@@ -238,7 +239,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerContainer.position.set(...calcScaledPos(2, 6, tileSize));
         playerContainer.addChild(playerSprite);
         
-        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar' });
+        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar', bindZToY: true, forceZInt: true, zBindingMultiplier, zBindingOffset: 0.5 });
         playerChar.setBoundingBox({ x: 2, width: -3 }, {
             mode: 'offset',
             target: playerSprite,

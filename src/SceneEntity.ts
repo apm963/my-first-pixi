@@ -24,6 +24,7 @@ interface Opts {
     bindZToY?: SceneEntity['bindZToY'];
     forceZInt?: SceneEntity['forceZInt'];
     zBindingMultiplier?: SceneEntity['zBindingMultiplier'];
+    zBindingOffset?: SceneEntity['zBindingOffset'];
     geometry?: PartialDimensions;
     mirrorTarget?: SceneEntity['mirrorTarget'];
 }
@@ -39,8 +40,9 @@ export class SceneEntity {
     };
     
     bindZToY: boolean = false;
-    forceZInt: boolean = false; // REVIEW: Current technique is Math.round. Reevaluate if this is desired (or desired as a setting)
+    forceZInt: boolean = false; // REVIEW: Current technique is Math.floor. Reevaluate if this is desired (or desired as a setting)
     zBindingMultiplier: number = 1;
+    zBindingOffset: number = 0;
     item: null | DisplayObject | Sprite | Container = null;
     name: string = uuidv4();
     mirrorTarget: null | Sprite = null;
@@ -113,8 +115,8 @@ export class SceneEntity {
             // @ts-ignore The index lookup has already been established above. REVIEW: Can this be improved?
             this.item[geometry] = val;
             if (geometry === 'y' && this.bindZToY) {
-                const newZ = (this.y + this.height) * this.zBindingMultiplier;
-                this.item.zIndex = (this.forceZInt ? Math.round(newZ) : newZ);
+                const newZ = ((this.y + this.height) * this.zBindingMultiplier);
+                this.item.zIndex = (this.forceZInt ? Math.floor(newZ) : newZ) + this.zBindingOffset;
             }
         }
         else {

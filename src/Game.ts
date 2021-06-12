@@ -241,12 +241,14 @@ export class Game {
         this.handleCollisions(collidedEntities);
         
         // Update z-axis based on y positions
-        movedItems.forEach(item => {
-            const newZ = calcZFromGeometry(item, tileSize, true) + 0.5; // The magic 0.5 is here for sort-cache-busting related reasons
-            if (newZ !== item.zIndex) {
-                item.zIndex = newZ;
-            }
-        });
+        movedItems
+            .filter(item => (item instanceof Container) || item.bindZToY === false) // Filter out entities that already handle this
+            .forEach(item => {
+                const newZ = calcZFromGeometry(item, tileSize, true) + 0.5; // The magic 0.5 is here for sort-cache-busting related reasons
+                if (newZ !== item.zIndex) {
+                    item.zIndex = newZ;
+                }
+            });
         
         // Particles
         currentScene.onTick(delta);
