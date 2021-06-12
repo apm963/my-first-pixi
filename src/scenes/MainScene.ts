@@ -6,7 +6,7 @@ import { GameSceneBase, GameSceneIface } from "../GameScene";
 
 
 // TODO: Clean these up and merge them with above. Use @pixi/* if possible.
-import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture, Resource, settings, SCALE_MODES } from "pixi.js";
+import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture, Resource, settings, SCALE_MODES, DisplayObject } from "pixi.js";
 import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
@@ -343,6 +343,18 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             },
             actions,
         };
+    }
+    
+    /** Returns an array of objects that can be collided with */
+    getSolidObjects(): (DisplayObject | InteractableEntity)[] {
+        return [
+            // REVIEW: Consider genericizing this further, maybe with this property existing on the InteractableEntity
+            ...this.items.walls[0].children,
+            this.items.playerChar,
+            this.items.npcChar,
+            this.items.torch.base,
+            this.items.ladder,
+        ]
     }
     
     onTick(delta: number) {

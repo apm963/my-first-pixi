@@ -221,14 +221,7 @@ export class Game {
         
         // Check collisions
         const collisionCheckItems = [...movedItems, ...currentScene.items.actions];
-        const objectsToCheck: (DisplayObject | InteractableEntity)[] = [
-            // TODO: Genericize this
-            ...currentScene.items.walls[0].children,
-            currentScene.items.playerChar,
-            currentScene.items.npcChar,
-            currentScene.items.torch.base,
-            currentScene.items.ladder,
-        ];
+        const objectsToCheck: (DisplayObject | InteractableEntity)[] = currentScene.getSolidObjects();
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
         
