@@ -6,7 +6,7 @@ import { CharacterEntity } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
-import { calcCenter, calcScaledPos, calculateZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
+import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
 import { SceneEntity } from "../SceneEntity";
 
@@ -162,7 +162,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add door
         const doorContainer = new Container();
         doorContainer.position.set(4 * tileSize, 1 * tileSize);
-        doorContainer.zIndex = calculateZFromGeometry(doorContainer, tileSize);
+        doorContainer.zIndex = calcZFromGeometry(doorContainer, tileSize);
         
         const doorSprites = generateSpritesFromAtlasMap([
             ['doorTopLeft', 'doorTopRight'],
