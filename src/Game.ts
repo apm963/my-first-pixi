@@ -255,6 +255,11 @@ export class Game {
                 return;
             }
             
+            if (Math.abs(entity.velocity.vx) + Math.abs(entity.velocity.vy) === 0) {
+                // This was not the entity that caused the collision but rather the recipient of the collision; do not revert
+                return;
+            }
+            
             const collidingObjects = collisionInfo.collisions;
             let playerBoundingBox = entity.getBoundingBox();
             let playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
