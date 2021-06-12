@@ -183,7 +183,7 @@ export class Game {
             return;
         }
         
-        const playerChar = currentScene.items.playerChar;
+        // const playerChar = currentScene.items.playerChar;
         const sceneItems = currentScene.getItemsFlat();
         
         // Move
@@ -229,84 +229,88 @@ export class Game {
             currentScene.items.torch.base,
         ];
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
+        const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
         
         // Dispatch collision events
-        computedCollisionInfo
-            .filter(collisionInfo => collisionInfo.occurred)
-            .forEach(collisionInfo => {
-                const collisionCheckItem = collisionInfo.entity;
-                const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
-                    collisionItemsOnSide.forEach(item => carry.push(item));
-                    return carry;
-                }, []);
-                if (collisionCheckItem instanceof InteractableEntity && collisionItems.some(container => container instanceof InteractableEntity)) {
-                    collisionCheckItem.dispatchCollisionEvent(collisionInfo);
-                }
-            });
-        
-        const playerCollisionInfo = computedCollisionInfo.filter(collisionInfo => collisionInfo.entity === playerChar)[0];
+        collidedEntities.forEach(collisionInfo => {
+            const collisionCheckItem = collisionInfo.entity;
+            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+                collisionItemsOnSide.forEach(item => carry.push(item));
+                return carry;
+            }, []);
+            if (collisionCheckItem instanceof InteractableEntity /* && collisionItems.some(container => container instanceof InteractableEntity) */) {
+                collisionCheckItem.dispatchCollisionEvent(collisionInfo);
+            }
+        });
         
         // Handle collisions
-        if (playerCollisionInfo && playerCollisionInfo.occurred) {
+        collidedEntities.forEach(collisionInfo => {
             // REVIEW: This can most likely be cleaned up. This took a lot of trial-and-error to get right.
             // REVIEW: I'm using >= and <= for the initial velocity comparisons. This "fixes" one issue but may cause subtle bugs elsewhere.
             
-            const collidingObjects = playerCollisionInfo.collisions;
-            let playerBoundingBox = playerChar.getBoundingBox();
-            let playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+            const entity = collisionInfo.entity;
             
-            const preRollbackPos = { x: playerChar.x, y: playerChar.y };
+            if (entity instanceof Container) {
+                console.info(`Collision not handled on entity '${entity.name}' because it is not an InteractableEntity`)
+                return;
+            }
+            
+            const collidingObjects = collisionInfo.collisions;
+            let playerBoundingBox = entity.getBoundingBox();
+            let playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+            
+            const preRollbackPos = { x: entity.x, y: entity.y };
             
             // Reverse player's position so it no longer intersects with the object it is colliding with
             let recalculatePlayerBoundingBox = false;
             
-            if (playerChar.velocity.vx <= 0 && playerCollisionInfo.sideOfEntityBit & HIT_LEFT) {
+            if (entity.velocity.vx <= 0 && collisionInfo.sideOfEntityBit & HIT_LEFT) {
                 recalculatePlayerBoundingBox = true;
-                playerChar.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
+                entity.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.x + boundingBox.width;
-                })), playerChar.x) + playerBoundingBoxOffset.x;
+                })), entity.x) + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy <= 0 && playerCollisionInfo.sideOfEntityBit & HIT_UP) {
+            if (entity.velocity.vy <= 0 && collisionInfo.sideOfEntityBit & HIT_UP) {
                 recalculatePlayerBoundingBox = true;
-                playerChar.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
+                entity.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.y + boundingBox.height;
-                })), playerChar.y) + playerBoundingBoxOffset.y;
+                })), entity.y) + playerBoundingBoxOffset.y;
             }
             
             if (recalculatePlayerBoundingBox) {
                 // Recalculate player's bounding box before we move onto the other side of the x and y coords
-                playerBoundingBox = playerChar.getBoundingBox();
-                playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+                playerBoundingBox = entity.getBoundingBox();
+                playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
                 recalculatePlayerBoundingBox = false;
             }
             
-            if (playerChar.velocity.vx >= 0 && playerCollisionInfo.sideOfEntityBit & HIT_RIGHT) {
+            if (entity.velocity.vx >= 0 && collisionInfo.sideOfEntityBit & HIT_RIGHT) {
                 recalculatePlayerBoundingBox = true;
-                playerChar.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
+                entity.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.x; // - boundingBoxOffset.x;
-                })), playerChar.x + playerBoundingBox.width - playerBoundingBoxOffset.x) - playerBoundingBox.width + playerBoundingBoxOffset.x;
+                })), entity.x + playerBoundingBox.width - playerBoundingBoxOffset.x) - playerBoundingBox.width + playerBoundingBoxOffset.x;
             }
             
-            if (playerChar.velocity.vy >= 0 && playerCollisionInfo.sideOfEntityBit & HIT_DOWN) {
+            if (entity.velocity.vy >= 0 && collisionInfo.sideOfEntityBit & HIT_DOWN) {
                 recalculatePlayerBoundingBox = true;
-                playerChar.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
+                entity.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                     const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                     // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                     return boundingBox.y; // - boundingBoxOffset.y;
-                })), playerChar.y + playerBoundingBox.height - playerBoundingBoxOffset.y) - playerBoundingBox.height + playerBoundingBoxOffset.y;
+                })), entity.y + playerBoundingBox.height - playerBoundingBoxOffset.y) - playerBoundingBox.height + playerBoundingBoxOffset.y;
             }
             
             if (recalculatePlayerBoundingBox) {
                 // Recalculate player's bounding box before we move onto granular movement
-                playerBoundingBox = playerChar.getBoundingBox();
-                playerBoundingBoxOffset = playerChar.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+                playerBoundingBox = entity.getBoundingBox();
+                playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
                 recalculatePlayerBoundingBox = false;
             }
             
@@ -322,9 +326,9 @@ export class Game {
             
             // Granular X-axis
             {
-                const nonCollidingPosX = playerChar.x;
-                playerChar.x = preRollbackPos.x;
-                const updatedPlayerBoundingBox = playerChar.getBoundingBox();
+                const nonCollidingPosX = entity.x;
+                entity.x = preRollbackPos.x;
+                const updatedPlayerBoundingBox = entity.getBoundingBox();
                 const recheckCollisionsX = [...(collidingObjects[HIT_LEFT] ?? []), ...(collidingObjects[HIT_RIGHT] ?? [])];
                 const isStillCollisionX = recheckCollisionsX.reduce((carry, container) => {
                     if (carry) { return carry; }
@@ -333,15 +337,15 @@ export class Game {
                 }, false);
                 if (isStillCollisionX) {
                     // Revert
-                    playerChar.x = nonCollidingPosX;
+                    entity.x = nonCollidingPosX;
                 }
             }
             
             // Granular Y-axis
             {
-                const nonCollidingPosY = playerChar.y;
-                playerChar.y = preRollbackPos.y;
-                const updatedPlayerBoundingBox = playerChar.getBoundingBox();
+                const nonCollidingPosY = entity.y;
+                entity.y = preRollbackPos.y;
+                const updatedPlayerBoundingBox = entity.getBoundingBox();
                 const recheckCollisionsY = [...(collidingObjects[HIT_UP] ?? []), ...(collidingObjects[HIT_DOWN] ?? [])];
                 const isStillCollisionY = recheckCollisionsY.reduce((carry, container) => {
                     if (carry) { return carry; }
@@ -350,11 +354,11 @@ export class Game {
                 }, false);
                 if (isStillCollisionY) {
                     // Revert
-                    playerChar.y = nonCollidingPosY;
+                    entity.y = nonCollidingPosY;
                 }
             }
             
-        }
+        });
         
         // Particles
         currentScene.onTick(delta);
