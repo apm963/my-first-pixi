@@ -240,6 +240,14 @@ export class Game {
         // Handle collisions
         this.handleCollisions(collidedEntities);
         
+        // Update z-axis based on y positions
+        movedItems.forEach(item => {
+            const newZ = Math.floor(item.y / tileSize) - 0.5;
+            if (newZ !== item.zIndex) {
+                item.zIndex = newZ;
+            }
+        });
+        
         // Particles
         currentScene.onTick(delta);
         

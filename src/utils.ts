@@ -50,3 +50,7 @@ export function createDebugOverlay(overlayItem: Container | InteractableEntity, 
     }
     return bg;
 }
+
+export function calculateZFromGeometry(geometry: {y: number, height: number}, tileSize: number) {
+    return (geometry.y + geometry.height) / tileSize;
+}

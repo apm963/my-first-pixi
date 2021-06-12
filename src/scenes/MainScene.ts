@@ -6,7 +6,7 @@ import { CharacterEntity } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
-import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
+import { calcCenter, calcScaledPos, calculateZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
 import { SceneEntity } from "../SceneEntity";
 
@@ -139,7 +139,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         // Generate floor sprites and add to stage
         const floorContainer = new Container();
-        floorContainer.zIndex = 1;
+        floorContainer.zIndex = -1;
         
         generateSpritesFromAtlasMap(backgroundFloorMap).forEach(sprite => {
             if (sprite.texture.textureCacheIds.includes('floorTileCracked')) {
@@ -161,8 +161,8 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         // Add door
         const doorContainer = new Container();
-        doorContainer.zIndex = 8;
         doorContainer.position.set(4 * tileSize, 1 * tileSize);
+        doorContainer.zIndex = calculateZFromGeometry(doorContainer, tileSize);
         
         const doorSprites = generateSpritesFromAtlasMap([
             ['doorTopLeft', 'doorTopRight'],
@@ -211,7 +211,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add ladder
         const ladderSprite = new Sprite(wallSheet['floorLadder']);
         ladderSprite.position.set(2 * tileSize, 1 * tileSize);
-        ladderSprite.zIndex = 8;
+        ladderSprite.zIndex = -1;
         
         const ladderObj = new InteractableEntity({ item: ladderSprite });
         ladderObj.setBoundingBox({ x: 4, y: 4, width: -8, height: -14 }, { mode: 'offset' });
