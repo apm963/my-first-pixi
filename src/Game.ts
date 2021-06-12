@@ -242,7 +242,7 @@ export class Game {
         
         // Update z-axis based on y positions
         movedItems.forEach(item => {
-            const newZ = Math.floor(item.y / tileSize) - 0.5;
+            const newZ = Math.floor(item.y / tileSize) - 0.5; // The magic 0.5 is here for sort-cache-busting related reasons
             if (newZ !== item.zIndex) {
                 item.zIndex = newZ;
             }
