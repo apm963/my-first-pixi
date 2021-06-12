@@ -255,7 +255,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         // Add NPCs
         const npcContainer = new Container();
-        npcContainer.zIndex = 10; // This goes above the wall and floor sprites
         
         const npcSprite = new Sprite(mainSheet['characterEyePatch']);
         npcSprite.anchor.set(0.5, 0.5);
@@ -265,7 +264,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         
-        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar' });
+        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar', bindZToY: true, forceZInt: true, zBindingMultiplier, zBindingOffset: 0.4 });
         npcChar.setBoundingBox({ x: 3, width: -6, height: -npcChar.height + charEntHitboxHeight, y: npcChar.height - charEntHitboxHeight }, {mode: 'offset', target: npcSprite});
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
