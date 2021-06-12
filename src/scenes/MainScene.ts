@@ -1,19 +1,13 @@
+import { DisplayObject, Loader, Sprite, Texture } from "pixi.js";
 import { Container } from "@pixi/display";
+import * as particles from 'pixi-particles';
+
 import { CharacterEntity } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
-
-
-
-// TODO: Clean these up and merge them with above. Use @pixi/* if possible.
-import { Loader, Sprite, Texture, DisplayObject } from "pixi.js";
-import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
-
-
-
 
 type SceneObjects = {
     playerChar: CharacterEntity;
