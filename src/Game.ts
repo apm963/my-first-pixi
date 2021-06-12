@@ -350,70 +350,70 @@ export class Game {
         }
         
         const collidingObjects = collisionInfo.collisions;
-        let playerBoundingBox = entity.getBoundingBox();
-        let playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
+        let entityBoundingBox = entity.getBoundingBox();
+        let entityBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(entityBoundingBox);
         
         const preRollbackPos = { x: entity.x, y: entity.y };
         
-        // Reverse player's position so it no longer intersects with the object it is colliding with
-        let recalculatePlayerBoundingBox = false;
+        // Reverse entity's position so it no longer intersects with the object it is colliding with
+        let recalculateEntityBoundingBox = false;
         
         if (entity.velocity.vx <= 0 && collisionInfo.sideOfEntityBit & HIT_LEFT) {
-            recalculatePlayerBoundingBox = true;
+            recalculateEntityBoundingBox = true;
             entity.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                 // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                 return boundingBox.x + boundingBox.width;
-            })), entity.x) + playerBoundingBoxOffset.x;
+            })), entity.x) + entityBoundingBoxOffset.x;
         }
         
         if (entity.velocity.vy <= 0 && collisionInfo.sideOfEntityBit & HIT_UP) {
-            recalculatePlayerBoundingBox = true;
+            recalculateEntityBoundingBox = true;
             entity.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                 // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                 return boundingBox.y + boundingBox.height;
-            })), entity.y) + playerBoundingBoxOffset.y;
+            })), entity.y) + entityBoundingBoxOffset.y;
         }
         
-        if (recalculatePlayerBoundingBox) {
-            // Recalculate player's bounding box before we move onto the other side of the x and y coords
-            playerBoundingBox = entity.getBoundingBox();
-            playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
-            recalculatePlayerBoundingBox = false;
+        if (recalculateEntityBoundingBox) {
+            // Recalculate entity's bounding box before we move onto the other side of the x and y coords
+            entityBoundingBox = entity.getBoundingBox();
+            entityBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(entityBoundingBox);
+            recalculateEntityBoundingBox = false;
         }
         
         if (entity.velocity.vx >= 0 && collisionInfo.sideOfEntityBit & HIT_RIGHT) {
-            recalculatePlayerBoundingBox = true;
+            recalculateEntityBoundingBox = true;
             entity.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                 // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                 return boundingBox.x; // - boundingBoxOffset.x;
-            })), entity.x + playerBoundingBox.width - playerBoundingBoxOffset.x) - playerBoundingBox.width + playerBoundingBoxOffset.x;
+            })), entity.x + entityBoundingBox.width - entityBoundingBoxOffset.x) - entityBoundingBox.width + entityBoundingBoxOffset.x;
         }
         
         if (entity.velocity.vy >= 0 && collisionInfo.sideOfEntityBit & HIT_DOWN) {
-            recalculatePlayerBoundingBox = true;
+            recalculateEntityBoundingBox = true;
             entity.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
                 // const boundingBoxOffset = InteractableObject.calculateBoundingBoxOffset(boundingBox, container);
                 return boundingBox.y; // - boundingBoxOffset.y;
-            })), entity.y + playerBoundingBox.height - playerBoundingBoxOffset.y) - playerBoundingBox.height + playerBoundingBoxOffset.y;
+            })), entity.y + entityBoundingBox.height - entityBoundingBoxOffset.y) - entityBoundingBox.height + entityBoundingBoxOffset.y;
         }
         
-        if (recalculatePlayerBoundingBox) {
-            // Recalculate player's bounding box before we move onto granular movement
-            playerBoundingBox = entity.getBoundingBox();
-            playerBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(playerBoundingBox);
-            recalculatePlayerBoundingBox = false;
+        if (recalculateEntityBoundingBox) {
+            // Recalculate entity's bounding box before we move onto granular movement
+            entityBoundingBox = entity.getBoundingBox();
+            entityBoundingBoxOffset = entity.calculateBoundingBoxOffsetFromOrigin(entityBoundingBox);
+            recalculateEntityBoundingBox = false;
         }
         
         /** Explanation of the following:
          * Try to prevent multi-axis movements from getting hung up on edges of tiles that it should not get hung up
-         * on. Eg. when pressing up+right and running into a straight vertical wall. Without this logic the player's
-         * x and y velocity would both be cancelled if the player was roughly in the middle of a tile (causing a
+         * on. Eg. when pressing up+right and running into a straight vertical wall. Without this logic the entity's
+         * x and y velocity would both be cancelled if the entity was roughly in the middle of a tile (causing a
          * collision to also occur on the tile immediately to the right of the primarily colliding tile). The goal
-         * of this is to incrementally try to move the player's position on one axis and then check the previously
+         * of this is to incrementally try to move the entity's position on one axis and then check the previously
          * detected collisions and see if they are still colliding. If they are, we cannot move in that axis. If not,
          * we can move on that axis.
          */
@@ -422,12 +422,12 @@ export class Game {
         {
             const nonCollidingPosX = entity.x;
             entity.x = preRollbackPos.x;
-            const updatedPlayerBoundingBox = entity.getBoundingBox();
+            const updatedEntityBoundingBox = entity.getBoundingBox();
             const recheckCollisionsX = [...(collidingObjects[HIT_LEFT] ?? []), ...(collidingObjects[HIT_RIGHT] ?? [])];
             const isStillCollisionX = recheckCollisionsX.reduce((carry, container) => {
                 if (carry) { return carry; }
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                return hitTestRectangle(updatedPlayerBoundingBox, boundingBox)[0];
+                return hitTestRectangle(updatedEntityBoundingBox, boundingBox)[0];
             }, false);
             if (isStillCollisionX) {
                 // Revert
@@ -439,12 +439,12 @@ export class Game {
         {
             const nonCollidingPosY = entity.y;
             entity.y = preRollbackPos.y;
-            const updatedPlayerBoundingBox = entity.getBoundingBox();
+            const updatedEntityBoundingBox = entity.getBoundingBox();
             const recheckCollisionsY = [...(collidingObjects[HIT_UP] ?? []), ...(collidingObjects[HIT_DOWN] ?? [])];
             const isStillCollisionY = recheckCollisionsY.reduce((carry, container) => {
                 if (carry) { return carry; }
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
-                return hitTestRectangle(updatedPlayerBoundingBox, boundingBox)[0];
+                return hitTestRectangle(updatedEntityBoundingBox, boundingBox)[0];
             }, false);
             if (isStillCollisionY) {
                 // Revert
