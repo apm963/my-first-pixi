@@ -116,6 +116,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Convert some to tiles to dirt floor
         backgroundFloorMap[0] = ['floorDirtTopLeft', ...Array(mapSize.width - 2).fill('floorDirtTop'), 'floorDirtTopRight'];
         backgroundFloorMap[1] = ['floorDirtLeft', ...Array(mapSize.width - 2).fill('wallSprite60'), 'floorDirtRight'];
+        backgroundFloorMap[2] = ['floorDirtLeft', ...Array(mapSize.width - 4).fill('wallSprite60'), ...Array(3).fill('floorTile')];
         
         // Add ladder
         backgroundFloorMap[1][2] = 'floorLadder';
