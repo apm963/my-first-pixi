@@ -8,13 +8,14 @@ import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
+import { SceneEntity } from "../SceneEntity";
 
 type SceneObjects = {
     playerChar: CharacterEntity;
     npcChar: CharacterEntity;
     floor: Container;
-    walls: (Sprite | Container)[]; // TODO: Make InteractableObject
-    door: Sprite[]; // TODO: Make InteractableObject
+    walls: (Sprite | Container)[]; // TODO: Make InteractableEntity
+    door: SceneEntity;
     ladder: InteractableEntity;
     torch: {
         base: InteractableEntity;
@@ -43,13 +44,13 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
     }
     
-    getItemsFlat(): (Container | InteractableEntity /* | SceneObject */)[] {
+    getItemsFlat(): (Container | InteractableEntity | SceneEntity)[] {
         return [
             this.items.playerChar,
             this.items.npcChar,
             this.items.floor,
             ...this.items.walls,
-            ...this.items.door,
+            this.items.door,
             this.items.torch.base,
             this.items.torch.fire,
             ...this.items.actions,
@@ -94,8 +95,8 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         const backgroundWallMap: string[][] = [
             ['wallRightMiddle', ...Array(6).fill(null), 'wallTopLeft', 'wall1Top', 'wall1Top'],
-            ['wallBottomLeftEnd', 'wall1Top', 'wall1Top', 'wallDoorLeftTop', 'doorTopLeft', 'doorTopRight', 'wallDoorRightTop', 'wall2Left', 'wall2', 'wall2'],
-            ['wall1Left', 'wall1', 'wall1', 'wallDoorLeft', 'doorBottomLeft', 'doorBottomRight', 'wallDoorRight', 'wallEndRight'],
+            ['wallBottomLeftEnd', 'wall1Top', 'wall1Top', 'wallDoorLeftTop', null, null, 'wallDoorRightTop', 'wall2Left', 'wall2', 'wall2'],
+            ['wall1Left', 'wall1', 'wall1', 'wallDoorLeft', null, null, 'wallDoorRight', 'wallEndRight'],
         ];
         
         const backgroundFloorMap: string[][] = Array(mapSize.height)
@@ -120,7 +121,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         }));
         
         // Generate wall sprites and add to stage
-        const upperItemFrameNames = ['wallTopLeft', 'wall1Top', 'wallDoorLeftTop', 'wallDoorRightTop', 'doorTopLeft', 'doorTopRight', 'openDoorTopLeft', 'openDoorTopRight', 'openDoorBottomLeft', 'openDoorBottomRight'];
+        const upperItemFrameNames = ['wallTopLeft', 'wall1Top', 'wallDoorLeftTop', 'wallDoorRightTop'];
         const isUpperItem = (frameName: string) => upperItemFrameNames.includes(frameName);
         
         const wallLowerContainer = new Container();
@@ -158,41 +159,53 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         sceneContainer.addChild(floorContainer);
         
+        // Add door
+        const doorContainer = new Container();
+        doorContainer.zIndex = 8;
+        doorContainer.position.set(4 * tileSize, 1 * tileSize);
+        
+        const doorSprites = generateSpritesFromAtlasMap([
+            ['doorTopLeft', 'doorTopRight'],
+            ['doorBottomLeft', 'doorBottomRight']
+        ]);
+        
+        doorSprites.forEach(doorSprite => doorContainer.addChild(doorSprite));
+        
+        const doorEntity = new SceneEntity({ item: doorContainer });
+        doorEntity.addTo(sceneContainer);
+        
         // Add actions (door open, etc.)
-        let doorOpen = false;
-        const doorTiles = [...wallUpperSprites, ...wallLowerSprites]
-            .filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName)));
+        const doorTiles = doorContainer.children as Sprite[];
         
         const actionOpenDoor = (collisionInfo: CollisionInfo) => {
-            if (doorOpen) { return; }
             const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
                 collisionItemsOnSide.forEach(item => carry.push(item));
                 return carry;
             }, []);
-            if (!collisionItems.includes(playerChar)) { return; }
-            doorTiles
-                .forEach(sprite => {
-                    
-                    // Swap out sprite with corresponding open door sprite
-                    const currentTextureFrameName: string = sprite.texture.textureCacheIds.filter(frameName => /^door/.test(frameName))[0] ?? '';
-                    const newTextureFrameName = `open${currentTextureFrameName.substr(0, 1).toUpperCase()}${currentTextureFrameName.substr(1)}`;
-                    sprite.texture = wallSheet[newTextureFrameName];
-                    
-                    // Move sprites to different container for collision purposes
-                    if (sprite.parent === wallLowerContainer) {
-                        wallUpperContainer.addChild(sprite);
-                    }
-                });
-            doorOpen = true;
+            
+            if (!collisionItems.includes(playerChar)) {
+                // Reregister
+                doorAction.addEventListener('collision', actionOpenDoor, { once: true });
+                return;
+            }
+            
+            console.log('opening door'); // DEBUG
+            
+            doorTiles.forEach(sprite => {
+                // Swap out sprite with corresponding open door sprite
+                const currentTextureFrameName: string = sprite.texture.textureCacheIds.filter(frameName => /^door/.test(frameName))[0] ?? '';
+                const newTextureFrameName = `open${currentTextureFrameName.substr(0, 1).toUpperCase()}${currentTextureFrameName.substr(1)}`;
+                sprite.texture = wallSheet[newTextureFrameName];
+            });
         };
         
         const doorAction = new InteractableEntity();
-        doorAction.x = Math.min(...doorTiles.map(doorTile => doorTile.x));
-        doorAction.y = Math.max(...doorTiles.map(doorTile => doorTile.y + doorTile.height));
+        doorAction.x = doorEntity.x;
+        doorAction.y = doorEntity.y + doorEntity.height;
         doorAction.width = tileSize * 2;
         doorAction.height = tileSize / 2;
         doorAction.addEventListener('collision', actionOpenDoor, {once: true});
-        
+        // createDebugOverlay(doorAction, sceneContainer, { visible: true, zIndex: 10 })
         actions.push(doorAction);
         
         // Add ladder
@@ -327,7 +340,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             npcChar,
             floor: floorContainer,
             walls: [wallLowerContainer, wallUpperContainer],
-            door: [...wallUpperSprites, ...wallLowerSprites].filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName))), // TODO: Refactor so this is a dedicated section / container
+            door: doorEntity,
             ladder: ladderObj,
             torch: {
                 base: torchObj,

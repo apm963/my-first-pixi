@@ -1,6 +1,7 @@
 import { Texture } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
+import { InteractableEntity } from "./InteractableEntity";
 
 export const tau = Math.PI * 2;
 
@@ -31,13 +32,21 @@ export function randomTrue(chanceFloat: number) {
     return Math.random() < chanceFloat;
 }
 
-export function createDebugOverlay(overlayItem: Container, addToContainer?: Container, opts?: Partial<Sprite>): Sprite {
+export function createDebugOverlay(overlayItem: Container | InteractableEntity, addToContainer?: Container, opts?: Partial<Sprite>): Sprite {
     const bg = new Sprite(Texture.WHITE);
+    bg.x = overlayItem.x;
+    bg.y = overlayItem.y;
     bg.width = overlayItem.width;
     bg.height = overlayItem.height;
     bg.tint = 0xff0000;
     bg.alpha = 0.3;
     Object.entries(opts ?? {}).forEach(([key, val]) => (bg[key as keyof typeof opts] as any) = val);
-    (addToContainer ?? overlayItem).addChild(bg);
+    if (overlayItem instanceof InteractableEntity) {
+        const item = (addToContainer ?? overlayItem.item);
+        item && 'addChild' in item && item.addChild(bg);
+    }
+    else {
+        (addToContainer ?? overlayItem).addChild(bg);
+    }
     return bg;
 }

@@ -5,7 +5,7 @@ import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
 import { hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
-import { Dimensions } from "./SceneEntity";
+import { Dimensions, SceneEntity } from "./SceneEntity";
 
 // TODO: Move these to this.loader
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
@@ -220,7 +220,8 @@ export class Game {
         });
         
         // Check collisions
-        const collisionCheckItems = [...movedItems, ...currentScene.items.actions];
+        const typeGuard = (item: InteractableEntity | SceneEntity | Container): item is (InteractableEntity | Container) => (item instanceof InteractableEntity || item instanceof Container);
+        const collisionCheckItems = [...movedItems, ...currentScene.items.actions].filter(typeGuard);
         const objectsToCheck: (DisplayObject | InteractableEntity)[] = currentScene.getSolidObjects();
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
