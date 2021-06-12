@@ -304,16 +304,15 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add torch
         const torchSprite = new Sprite(mainSheet['torchBottom0']);
         torchSprite.position.set(7 * tileSize, 3 * tileSize);
-        torchSprite.zIndex = 8;
         
-        const torchObj = new InteractableEntity({ item: torchSprite });
+        const torchObj = new InteractableEntity({ item: torchSprite, bindZToY: true, forceZInt: true, zBindingMultiplier });
         torchObj.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
         torchObj.addTo(sceneContainer);
         
         // Add fire
         const torchFireContainer = new Container();
         torchFireContainer.position.set(7.5 * tileSize, 3.1 * tileSize); // Position the particle origin nicely on the torch
-        torchFireContainer.zIndex = 99;
+        torchFireContainer.zIndex = torchSprite.zIndex + 1;
         torchFireContainer.scale.set(0.2);
         const torchFireEmitter = new particles.Emitter(
             torchFireContainer,
