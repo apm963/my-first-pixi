@@ -22,6 +22,7 @@ type SceneObjects = {
     floor: Container;
     walls: (Sprite | Container)[]; // TODO: Make InteractableObject
     door: Sprite[]; // TODO: Make InteractableObject
+    ladder: InteractableEntity;
     torch: {
         base: InteractableEntity;
         fire: Container;
@@ -115,9 +116,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         backgroundFloorMap[1] = ['floorDirtLeft', ...Array(mapSize.width - 2).fill('wallSprite60'), 'floorDirtRight'];
         backgroundFloorMap[2] = ['floorDirtLeft', ...Array(mapSize.width - 4).fill('wallSprite60'), ...Array(3).fill('floorTile')];
         
-        // Add ladder
-        backgroundFloorMap[1][2] = 'floorLadder';
-        
         // Manually make some floor tiles broken
         backgroundFloorMap[3][2] = backgroundFloorMap[4][5] = 'floorTileCracked';
         
@@ -203,6 +201,15 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         doorAction.addEventListener('collision', actionOpenDoor, {once: true});
         
         actions.push(doorAction);
+        
+        // Add ladder
+        const ladderSprite = new Sprite(wallSheet['floorLadder']);
+        ladderSprite.position.set(2 * tileSize, 1 * tileSize);
+        ladderSprite.zIndex = 8;
+        
+        const ladderObj = new InteractableEntity({ item: ladderSprite });
+        ladderObj.setBoundingBox({ x: 4, y: 4, width: -8, height: -14 }, { mode: 'offset' });
+        ladderObj.addTo(sceneContainer);
         
         // ** Characters
         const handleCharacterFacingDirection = (char: CharacterEntity, changedVectors: (keyof Velocity)[]) => {
@@ -328,6 +335,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             floor: floorContainer,
             walls: [wallLowerContainer, wallUpperContainer],
             door: [...wallUpperSprites, ...wallLowerSprites].filter(sprite => sprite.texture.textureCacheIds.some(frameName => /^door/.test(frameName))), // TODO: Refactor so this is a dedicated section / container
+            ladder: ladderObj,
             torch: {
                 base: torchObj,
                 fire: torchFireContainer,

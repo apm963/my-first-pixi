@@ -227,6 +227,7 @@ export class Game {
             currentScene.items.playerChar,
             currentScene.items.npcChar,
             currentScene.items.torch.base,
+            currentScene.items.ladder,
         ];
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
