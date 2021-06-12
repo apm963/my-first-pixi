@@ -1,5 +1,3 @@
-// import { Container, DisplayObject } from "@pixi/display";
-// import { Sprite } from "@pixi/sprite";
 import { Container, DisplayObject, Sprite } from 'pixi.js';
 import { v4 as uuidv4 } from 'uuid';
 

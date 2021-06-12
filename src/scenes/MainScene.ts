@@ -6,12 +6,11 @@ import { GameSceneBase, GameSceneIface } from "../GameScene";
 
 
 // TODO: Clean these up and merge them with above. Use @pixi/* if possible.
-import { Application, Loader, utils, Sprite, Rectangle, Text, TextStyle, Texture, Resource, settings, SCALE_MODES, DisplayObject } from "pixi.js";
+import { Loader, Sprite, Texture, DisplayObject } from "pixi.js";
 import * as particles from 'pixi-particles';
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
-import { SceneEntity } from "../SceneEntity";
 
 
 

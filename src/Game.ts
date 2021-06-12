@@ -4,7 +4,7 @@ import { InteractableEntity, Velocity, CollisionInfo } from "./InteractableEntit
 import { GameSceneBase, GameSceneIface } from "./GameScene";
 import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
-import { HitRectangle, hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
+import { hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
 import { Dimensions } from "./SceneEntity";
 
 // TODO: Move these to this.loader
