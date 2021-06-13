@@ -9,6 +9,7 @@ import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from "../InteractableEntity";
 import { PartialDimensions, SceneEntity } from "../SceneEntity";
+import { HIT_LEFT, HIT_RIGHT } from "../collisions";
 
 type SceneObjects = {
     playerChar: CharacterEntity;
@@ -301,11 +302,21 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
                 collisionItemsOnSide.forEach(item => carry.push(item));
                 return carry;
             }, []);
+            
+            // Handle non-player collisions differently
             if (!collisionItems.includes(playerChar)) {
                 // Probably a wall; reverse!
                 npcChar.velocity.vx *= -1;
                 return;
             }
+            
+            // Do not stop moving if player collided from the back
+            if (collisionInfo.sideOfEntityBit & (npcChar.velocity.vx > 0 ? HIT_LEFT : HIT_RIGHT)) {
+                // Move along
+                return;
+            }
+            
+            // Stop movement
             const origVx = npcChar.velocity.vx;
             if (origVx !== 0 && npcPreCollisionVx === 0) {
                 npcChar.velocity.vx = 0;
