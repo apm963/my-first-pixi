@@ -105,7 +105,15 @@ export class SceneEntity {
     
     /** @description A helper method to get dimensions. Do not use this for setting. */
     getDimensions() {
-        return {...this.geometry};
+        const { item } = this;
+        const dimensions = { ...this.geometry };
+        if (item) {
+            dimensions.height = dimensions.height ?? ('height' in item ? item.height : 0);
+            dimensions.width = dimensions.width ?? ('width' in item ? item.width : 0);
+            dimensions.x = dimensions.x ?? item.x;
+            dimensions.y = dimensions.y ?? item.y;
+        }
+        return dimensions;
     }
     
     protected setDimension(geometry: keyof SceneEntity['geometry'], val: number) {
