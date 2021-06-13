@@ -328,9 +328,9 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const torchSprite = new Sprite(mainSheet['torchBottom0']);
         torchSprite.position.set(7 * tileSize, 3 * tileSize);
         
-        const torchObj = new InteractableEntity({ item: torchSprite, bindZToY: true, zBindingMultiplier });
-        torchObj.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
-        torchObj.addTo(sceneContainer);
+        const torchEntity = new InteractableEntity({ item: torchSprite, name: 'torch', bindZToY: true, zBindingMultiplier });
+        torchEntity.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
+        torchEntity.addTo(sceneContainer);
         
         // Add fire
         const torchFireContainer = new Container();
@@ -366,7 +366,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             door: doorEntity,
             ladder: ladderObj,
             torch: {
-                base: torchObj,
+                base: torchEntity,
                 fire: torchFireContainer,
                 fireEmitter: torchFireEmitter,
             },
