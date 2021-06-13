@@ -216,8 +216,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
                 return;
             }
             
-            console.log('opening door'); // DEBUG
-            
             doorTiles.forEach(sprite => {
                 // Swap out sprite with corresponding open door sprite
                 const currentTextureFrameName: string = sprite.texture.textureCacheIds.filter(frameName => /^door/.test(frameName))[0] ?? '';
