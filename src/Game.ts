@@ -102,7 +102,7 @@ export class Game {
         const [
             arrowUp, arrowRight, arrowDown, arrowLeft,
             wKey, dKey, sKey, aKey,
-            minusKey, equalsKey
+            minusKey, equalsKey, iKey
         ] = [
             new KeyboardListener('ArrowUp'),
             new KeyboardListener('ArrowRight'),
@@ -114,6 +114,7 @@ export class Game {
             new KeyboardListener('KeyA'),
             new KeyboardListener('Minus'),
             new KeyboardListener('Equal'),
+            new KeyboardListener('KeyI'),
         ];
         
         const { playerMaxVelocity } = Game;
@@ -137,6 +138,8 @@ export class Game {
         
         minusKey.press = () => setZoom(this.worldScale - 0.5);
         equalsKey.press = () => setZoom(this.worldScale + 0.5);
+        
+        iKey.press = () => console.log(playerChar.getDimensions());
         
     }
     
@@ -331,8 +334,31 @@ export class Game {
             if (isCollision) {
                 collisionInfo.occurred = true;
                 collisionInfo.sideOfEntityBit |= sideOfEntityBit;
-                collisionInfo.collisions[sideOfEntityBit] = collisionInfo.collisions[sideOfEntityBit] ?? [];
-                collisionInfo.collisions[sideOfEntityBit].push('item' in container ? container : container);
+                
+                // NOTE: At the time of authoring there *shouldn't* be a time when sideOfEntityBit gets returned with
+                //       multiple bits set. Multiple bits are, however, expected in collisionInfo.sideOfEntityBit. This
+                //       logic is being left this way to handle a single collision on multiple sides if that
+                //       functionality is adjusted in the future.
+                if (sideOfEntityBit & HIT_UP) {
+                    collisionInfo.collisions[HIT_UP] = collisionInfo.collisions[HIT_UP] ?? [];
+                    collisionInfo.collisions[HIT_UP].push('item' in container ? container : container);
+                }
+                if (sideOfEntityBit & HIT_DOWN) {
+                    collisionInfo.collisions[HIT_DOWN] = collisionInfo.collisions[HIT_DOWN] ?? [];
+                    collisionInfo.collisions[HIT_DOWN].push('item' in container ? container : container);
+                }
+                if (sideOfEntityBit & HIT_LEFT) {
+                    collisionInfo.collisions[HIT_LEFT] = collisionInfo.collisions[HIT_LEFT] ?? [];
+                    collisionInfo.collisions[HIT_LEFT].push('item' in container ? container : container);
+                }
+                if (sideOfEntityBit & HIT_RIGHT) {
+                    collisionInfo.collisions[HIT_RIGHT] = collisionInfo.collisions[HIT_RIGHT] ?? [];
+                    collisionInfo.collisions[HIT_RIGHT].push('item' in container ? container : container);
+                }
+                
+                // if (collisionCheckItem.name === 'playerChar') {
+                //     console.debug(`${sideOfEntityBit & HIT_LEFT ? '+' : '.'}L ${sideOfEntityBit & HIT_RIGHT ? '+' : '.'}R ${sideOfEntityBit & HIT_UP ? '+' : '.'}U ${sideOfEntityBit & HIT_DOWN ? '+' : '.'}D :: ${container.ident ?? container.name}`);
+                // }
             }
         }
         
@@ -345,7 +371,6 @@ export class Game {
     
     handleCollision(collisionInfo: CollisionInfo) {
         // REVIEW: This can most likely be cleaned up. This took a lot of trial-and-error to get right.
-        // REVIEW: I'm using >= and <= for the initial velocity comparisons. This "fixes" one issue but may cause subtle bugs elsewhere.
         
         const entity = collisionInfo.entity;
         
@@ -368,7 +393,7 @@ export class Game {
         // Reverse entity's position so it no longer intersects with the object it is colliding with
         let recalculateEntityBoundingBox = false;
         
-        if (entity.velocity.vx <= 0 && collisionInfo.sideOfEntityBit & HIT_LEFT) {
+        if (collisionInfo.sideOfEntityBit & HIT_LEFT) {
             recalculateEntityBoundingBox = true;
             entity.x = Math.max(Math.max(...collidingObjects[HIT_LEFT].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -377,7 +402,7 @@ export class Game {
             })), entity.x) + entityBoundingBoxOffset.x;
         }
         
-        if (entity.velocity.vy <= 0 && collisionInfo.sideOfEntityBit & HIT_UP) {
+        if (collisionInfo.sideOfEntityBit & HIT_UP) {
             recalculateEntityBoundingBox = true;
             entity.y = Math.max(Math.max(...collidingObjects[HIT_UP].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -393,7 +418,7 @@ export class Game {
             recalculateEntityBoundingBox = false;
         }
         
-        if (entity.velocity.vx >= 0 && collisionInfo.sideOfEntityBit & HIT_RIGHT) {
+        if (collisionInfo.sideOfEntityBit & HIT_RIGHT) {
             recalculateEntityBoundingBox = true;
             entity.x = Math.min(Math.min(...collidingObjects[HIT_RIGHT].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
@@ -402,7 +427,7 @@ export class Game {
             })), entity.x + entityBoundingBox.width - entityBoundingBoxOffset.x) - entityBoundingBox.width + entityBoundingBoxOffset.x;
         }
         
-        if (entity.velocity.vy >= 0 && collisionInfo.sideOfEntityBit & HIT_DOWN) {
+        if (collisionInfo.sideOfEntityBit & HIT_DOWN) {
             recalculateEntityBoundingBox = true;
             entity.y = Math.min(Math.min(...collidingObjects[HIT_DOWN].map(container => {
                 const boundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
