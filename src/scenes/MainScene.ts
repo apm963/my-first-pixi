@@ -14,7 +14,7 @@ type SceneObjects = {
     playerChar: CharacterEntity;
     npcChar: CharacterEntity;
     floor: Container;
-    walls: (Sprite | Container)[]; // TODO: Make InteractableEntity
+    walls: InteractableEntity[];
     door: SceneEntity;
     ladder: InteractableEntity;
     torch: {
@@ -74,8 +74,13 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const wallSheet = resources[spriteSheetTextureAtlasFiles.walls]?.textures ?? {};
         const mainSheet = resources[spriteSheetTextureAtlasFiles.main]?.textures ?? {};
         
-        const generateSpritesFromAtlasMap = (mapRowsCols: ((string | null)[] | null)[], zIndex?: number): Sprite[] => {
-            const sprites: Sprite[] = [];
+        type GenerateSpritesFromAtlasMap = {
+            (mapRowsCols: ((string | null)[] | null)[], zIndex?: number): Sprite[];
+            <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex: number, wrapperClass: new (opts: { item: Container }) => T): T[];
+        };
+        
+        const generateSpritesFromAtlasMap: GenerateSpritesFromAtlasMap = <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex?: number, wrapperClass?: new (opts: {item: Container}) => T) => {
+            const sprites: (Sprite | T)[] = [];
             
             mapRowsCols.forEach((mapRow, row) => {
                 (mapRow ?? []).forEach((mapCell, col) => {
@@ -84,16 +89,19 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
                         return;
                     }
                     const sprite = new Sprite(wallSheet[mapCell]);
-                    sprite.position.set(col * tileSize, row * tileSize);
+                    const spriteOrWrapper: Sprite | T = (wrapperClass ? new wrapperClass({item: sprite}) : sprite);
+                    // spriteOrWrapper.position.set(col * tileSize, row * tileSize);
+                    spriteOrWrapper.x = col * tileSize;
+                    spriteOrWrapper.y = row * tileSize;
                     if (typeof zIndex === 'number') {
-                        sprite.zIndex = zIndex;
+                        spriteOrWrapper.zIndex = zIndex;
                     }
-                    sprites.push(sprite);
+                    sprites.push(spriteOrWrapper);
                 });
             });
             
             return sprites;
-        }
+        };
         
         const backgroundWallMap: string[][] = [
             ['wallRightMiddle', ...Array(6).fill(null), 'wallTopLeft', 'wall1Top', 'wall1Top'],
@@ -126,18 +134,16 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const upperItemFrameNames = ['wallTopLeft', 'wall1Top', 'wallDoorLeftTop', 'wallDoorRightTop'];
         const isUpperItem = (frameName: string) => upperItemFrameNames.includes(frameName);
         
-        const wallLowerContainer = new Container();
-        wallLowerContainer.zIndex = 2;
-        const wallLowerSprites = generateSpritesFromAtlasMap(backgroundWallMap.map(row => row.map(frameName => !isUpperItem(frameName) ? frameName : null)))
-        wallLowerSprites.forEach(sprite => wallLowerContainer.addChild(sprite));
-        
-        const wallUpperContainer = new Container();
-        wallUpperContainer.zIndex = 20;
-        const wallUpperSprites = generateSpritesFromAtlasMap(backgroundWallMap.map(row => row.map(frameName => isUpperItem(frameName) ? frameName : null)))
-        wallUpperSprites.forEach(sprite => wallUpperContainer.addChild(sprite));
-        
-        sceneContainer.addChild(wallLowerContainer);
-        sceneContainer.addChild(wallUpperContainer);
+        const wallEntities = generateSpritesFromAtlasMap(backgroundWallMap, 0, InteractableEntity);
+        wallEntities
+            .filter(ent => ent.item && ent.item instanceof Sprite && isUpperItem(ent.item.texture.textureCacheIds[0]))
+            .forEach(wallEntity => wallEntity.boundingBoxEnabled = false);
+        wallEntities.forEach(wallEntity => {
+            wallEntity.bindZToY = true;
+            wallEntity.zBindingMultiplier = zBindingMultiplier;
+            wallEntity.y = wallEntity.y; // Force y change to make z recalc
+            wallEntity.addTo(sceneContainer);
+        });
         
         // Generate floor sprites and add to stage
         const floorContainer = new Container();
@@ -240,7 +246,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerContainer.position.set(...calcScaledPos(2, 6, tileSize));
         playerContainer.addChild(playerSprite);
         
-        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar', bindZToY: true, forceZInt: true, zBindingMultiplier, zBindingOffset: 0.5 });
+        const playerChar = new CharacterEntity({ item: playerContainer, mirrorTarget: playerSprite, name: 'playerChar', bindZToY: true, zBindingMultiplier, zBindingOffset: -0.01 });
         playerChar.setBoundingBox({ x: 2, width: -3, height: -playerChar.height + charEntHitboxHeight, y: playerChar.height - charEntHitboxHeight }, {
             mode: 'offset',
             target: playerSprite,
@@ -264,7 +270,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
         
-        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar', bindZToY: true, forceZInt: true, zBindingMultiplier, zBindingOffset: 0.4 });
+        const npcChar = new CharacterEntity({ item: npcContainer, mirrorTarget: npcSprite, name: 'npcChar', bindZToY: true, zBindingMultiplier, zBindingOffset: -0.01 });
         npcChar.setBoundingBox({ x: 3, width: -6, height: -npcChar.height + charEntHitboxHeight, y: npcChar.height - charEntHitboxHeight }, {mode: 'offset', target: npcSprite});
         npcChar.velocity.vx = -0.02;
         npcChar.addEventListener('collisionSceneBoundary', () => npcChar.velocity.vx *= -1);
@@ -305,7 +311,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const torchSprite = new Sprite(mainSheet['torchBottom0']);
         torchSprite.position.set(7 * tileSize, 3 * tileSize);
         
-        const torchObj = new InteractableEntity({ item: torchSprite, bindZToY: true, forceZInt: true, zBindingMultiplier });
+        const torchObj = new InteractableEntity({ item: torchSprite, bindZToY: true, zBindingMultiplier });
         torchObj.setBoundingBox({ x: 4, width: -8, height: -2 }, { mode: 'offset' });
         torchObj.addTo(sceneContainer);
         
@@ -338,7 +344,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             playerChar,
             npcChar,
             floor: floorContainer,
-            walls: [wallLowerContainer, wallUpperContainer],
+            walls: wallEntities,
             door: doorEntity,
             ladder: ladderObj,
             torch: {
@@ -354,7 +360,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
     getSolidObjects(): (DisplayObject | InteractableEntity)[] {
         return [
             // REVIEW: Consider genericizing this further, maybe with this property existing on the InteractableEntity
-            ...this.items.walls[0].children,
+            ...this.items.walls,
             this.items.playerChar,
             this.items.npcChar,
             this.items.torch.base,

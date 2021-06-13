@@ -29,6 +29,7 @@ interface EventOpts {
 
 export class InteractableEntity extends SceneEntity {
     
+    boundingBoxEnabled: boolean = true;
     protected boundingBoxMode: BoundingBoxMode = 'absolute';
     
     protected boundingBox: PartialDimensions = {
