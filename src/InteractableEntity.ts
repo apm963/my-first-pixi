@@ -21,6 +21,12 @@ export type CollisionInfo = {
  */
 type BoundingBoxMode = 'relative' | 'absolute' | 'offset';
 
+export interface SetBoundingBoxOpts {
+    mode: BoundingBoxMode;
+    target: Sprite;
+    boundingBoxDebugOverlay: Sprite;
+};
+
 type Events = 'collision' | 'collisionSceneBoundary' | 'velocityChange';
 type EventCb = (...args: any[]) => void;
 interface EventOpts {
@@ -155,7 +161,7 @@ export class InteractableEntity extends SceneEntity {
         return InteractableEntity.calculateBoundingBoxOffset(boundingBox, this);
     }
     
-    setBoundingBox(dims: Partial<PartialDimensions>, opts: Partial<{ mode: BoundingBoxMode; target: Sprite; boundingBoxDebugOverlay: Sprite; }> = {}) {
+    setBoundingBox(dims: Partial<PartialDimensions>, opts: Partial<SetBoundingBoxOpts> = {}) {
         this.boundingBoxMode = opts.mode ?? 'relative';
         this.boundingBoxTarget = opts.target ?? null;
         this.boundingBoxDebugOverlay = opts.boundingBoxDebugOverlay ?? null;
@@ -167,6 +173,11 @@ export class InteractableEntity extends SceneEntity {
                 return;
             }
             this.boundingBox[prop] = val;
+        }
+        
+        if (this.boundingBoxDebugOverlay) {
+            // Force debug bounding box dimensions to be calculated and applied
+            this.getBoundingBox();
         }
     }
     

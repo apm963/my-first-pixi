@@ -7,8 +7,8 @@ import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
-import { CollisionInfo, InteractableEntity, Velocity } from "../InteractableEntity";
-import { SceneEntity } from "../SceneEntity";
+import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from "../InteractableEntity";
+import { PartialDimensions, SceneEntity } from "../SceneEntity";
 
 type SceneObjects = {
     playerChar: CharacterEntity;
@@ -76,10 +76,10 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         type GenerateSpritesFromAtlasMap = {
             (mapRowsCols: ((string | null)[] | null)[], zIndex?: number): Sprite[];
-            <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex: number, wrapperClass: new (opts: { item: Container }) => T): T[];
+            <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex: number, wrapperClass: new (opts: { item: SceneEntity['item'], ident: SceneEntity['ident'] }) => T): T[];
         };
         
-        const generateSpritesFromAtlasMap: GenerateSpritesFromAtlasMap = <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex?: number, wrapperClass?: new (opts: {item: Container}) => T) => {
+        const generateSpritesFromAtlasMap: GenerateSpritesFromAtlasMap = <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex?: number, wrapperClass?: new (opts: { item: SceneEntity['item'], ident: SceneEntity['ident'] }) => T) => {
             const sprites: (Sprite | T)[] = [];
             
             mapRowsCols.forEach((mapRow, row) => {
@@ -89,7 +89,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
                         return;
                     }
                     const sprite = new Sprite(wallSheet[mapCell]);
-                    const spriteOrWrapper: Sprite | T = (wrapperClass ? new wrapperClass({item: sprite}) : sprite);
+                    const spriteOrWrapper: Sprite | T = (wrapperClass ? new wrapperClass({ item: sprite, ident: mapCell }) : sprite);
                     // spriteOrWrapper.position.set(col * tileSize, row * tileSize);
                     spriteOrWrapper.x = col * tileSize;
                     spriteOrWrapper.y = row * tileSize;
@@ -108,6 +108,17 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             ['wallBottomLeftEnd', 'wall1Top', 'wall1Top', 'wallDoorLeftTop', null, null, 'wallDoorRightTop', 'wall2Left', 'wall2', 'wall2'],
             ['wall1Left', 'wall1', 'wall1', 'wallDoorLeft', null, null, 'wallDoorRight', 'wallEndRight'],
         ];
+        
+        const textureAtlasCustomHitboxLookup: {
+            [textureAtlasName: string]: {
+                dims: Partial<PartialDimensions>;
+                opts?: Partial<SetBoundingBoxOpts>;
+            }
+        } = {
+            'wallRightMiddle': { dims: { width: 5 }, },
+            'wallBottomLeftEnd': { dims: { width: 5 }, opts: {mode: "absolute"}, },
+            'wallEndRight': { dims: { width: 5 }, opts: {mode: "absolute"}, },
+        };
         
         const backgroundFloorMap: string[][] = Array(mapSize.height)
             .fill(null)
@@ -135,13 +146,22 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const isUpperItem = (frameName: string) => upperItemFrameNames.includes(frameName);
         
         const wallEntities = generateSpritesFromAtlasMap(backgroundWallMap, 0, InteractableEntity);
+        
         wallEntities
             .filter(ent => ent.item && ent.item instanceof Sprite && isUpperItem(ent.item.texture.textureCacheIds[0]))
             .forEach(wallEntity => wallEntity.boundingBoxEnabled = false);
+        
         wallEntities.forEach(wallEntity => {
             wallEntity.bindZToY = true;
             wallEntity.zBindingMultiplier = zBindingMultiplier;
             wallEntity.y = wallEntity.y; // Force y change to make z recalc
+            // Set hitboxes if special
+            if (wallEntity.ident && wallEntity.ident in textureAtlasCustomHitboxLookup) {
+                const customHitbox = textureAtlasCustomHitboxLookup[wallEntity.ident];
+                // customHitbox.opts = customHitbox.opts ?? {};
+                // customHitbox.opts.boundingBoxDebugOverlay = createDebugOverlay(wallEntity, sceneContainer, { zIndex: 100, visible: true });
+                wallEntity.setBoundingBox(customHitbox.dims, customHitbox.opts);
+            }
             wallEntity.addTo(sceneContainer);
         });
         

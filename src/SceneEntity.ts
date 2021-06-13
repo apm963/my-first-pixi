@@ -19,8 +19,10 @@ type Geometry = PartialDimensions & { zIndex: null | number; };
 
 interface Opts {
     item?: SceneEntity['item'];
-    /** @description Used to identify this specific entity instance. Useful for debugging */
+    /** @description Used to uniquely identify this specific entity instance. Useful for debugging */
     name?: SceneEntity['name'];
+    /** @description Used for classification of this entity instance. Useful for iteratively applying properties to specific tiles (based on texture name) */
+    ident?: SceneEntity['ident'];
     bindZToY?: SceneEntity['bindZToY'];
     forceZInt?: SceneEntity['forceZInt'];
     zBindingMultiplier?: SceneEntity['zBindingMultiplier'];
@@ -45,6 +47,7 @@ export class SceneEntity {
     zBindingOffset: number = 0;
     item: null | DisplayObject | Sprite | Container = null;
     name: string = uuidv4();
+    ident: null | string = null;
     mirrorTarget: null | Sprite = null;
     
     get width(): number {
