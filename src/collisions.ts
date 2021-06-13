@@ -42,24 +42,30 @@ export function hitTestRectangle(r1: HitRectangle, r2: HitRectangle): [false, 0b
             // There's definitely a collision happening
             let sideOfR1Bit: number = 0b0;
             
-            const ox = (Math.abs(vx) - r1HalfWidth);
-            const oy = (Math.abs(vy) - r1HalfHeight);
+            // This came from https://stackoverflow.com/a/13349505
+            const r1Bottom = r1.y + r1.height;
+            const r2Bottom = r2.y + r2.height;
+            const r1Right = r1.x + r1.width;
+            const r2Right = r2.x + r2.width;
             
-            // console.log(`${Math.abs(oy).toFixed(2)}, ${Math.abs(ox).toFixed(2)} / oy ${(oy).toFixed(2)}, ox ${(ox).toFixed(2)}`);
+            const collisionDown = r2Bottom - r1.y;
+            const collisionUp = r1Bottom - r2.y;
+            const collisionLeft = r1Right - r2.x;
+            const collisionRight = r2Right - r1.x;
             
-            if (oy > 0 && ox < 0) {
-                sideOfR1Bit |= (r1CenterY > r2CenterY ? HIT_UP : HIT_DOWN);
+            if (collisionUp < collisionDown && collisionUp < collisionLeft && collisionUp < collisionRight) {
+                sideOfR1Bit |= HIT_DOWN;
             }
-            else if (oy < 0 && ox > 0) {
-                sideOfR1Bit |= (r1CenterX > r2CenterX ? HIT_LEFT : HIT_RIGHT);
+            if (collisionDown < collisionUp && collisionDown < collisionLeft && collisionDown < collisionRight) {
+                sideOfR1Bit |= HIT_UP;
+            }
+            if (collisionLeft < collisionRight && collisionLeft < collisionUp && collisionLeft < collisionDown) {
+                sideOfR1Bit |= HIT_RIGHT;
+            }
+            if (collisionRight < collisionLeft && collisionRight < collisionUp && collisionRight < collisionDown) {
+                sideOfR1Bit |= HIT_LEFT;
             }
             
-            else if (Math.abs(Math.abs(vy) - r1HalfHeight) > Math.abs(Math.abs(vx) - r1HalfWidth)) {
-                sideOfR1Bit |= (Math.sign(vy) === -1 ? HIT_DOWN : HIT_UP);
-            }
-            else {
-                sideOfR1Bit |= (Math.sign(vx) === -1 ? HIT_RIGHT : HIT_LEFT);
-            }
             return [true, sideOfR1Bit];
         } else {
             // There's no collision on the y axis
