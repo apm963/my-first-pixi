@@ -218,7 +218,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add ladder
         const ladderSprite = new Sprite(wallSheet['floorLadder']);
         ladderSprite.position.set(2 * tileSize, 1 * tileSize);
-        ladderSprite.zIndex = -1;
+        ladderSprite.zIndex = 0;
         
         const ladderObj = new InteractableEntity({ item: ladderSprite });
         ladderObj.setBoundingBox({ x: 4, y: 4, width: -8, height: -14 }, { mode: 'offset' });
@@ -238,7 +238,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         // Add player character
         const playerContainer = new Container();
-        playerContainer.zIndex = 11; // This goes above the wall, floor, and npc sprites
         
         const playerSprite = new Sprite(mainSheet['characterBeard']);
         playerSprite.anchor.set(0.5, 0.5);
@@ -318,7 +317,8 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         // Add fire
         const torchFireContainer = new Container();
         torchFireContainer.position.set(7.5 * tileSize, 3.1 * tileSize); // Position the particle origin nicely on the torch
-        torchFireContainer.zIndex = torchSprite.zIndex + 1;
+        
+        torchFireContainer.zIndex = torchSprite.zIndex + 1; // Fire goes above torch in a similar way a wall upper goes above a wall lower
         torchFireContainer.scale.set(0.2);
         const torchFireEmitter = new particles.Emitter(
             torchFireContainer,
