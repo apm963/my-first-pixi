@@ -28,9 +28,10 @@ export interface SetBoundingBoxOpts {
 };
 
 type Events = 'collision' | 'collisionSceneBoundary' | 'velocityChange';
-type EventCb = (...args: any[]) => void;
-interface EventOpts {
+type EventCb<R extends any[]> = (...args: R) => void;
+interface EventOpts<G extends any[]> {
     once: boolean;
+    predicate: (...args: G) => boolean;
 };
 
 export class InteractableEntity extends SceneEntity {
@@ -59,7 +60,7 @@ export class InteractableEntity extends SceneEntity {
         vy: Infinity,
     };
     
-    protected eventListeners: { [eventName in Events]: { cb: EventCb; opts: Partial<EventOpts>; }[] } = {
+    protected eventListeners: { [eventName in Events]: { cb: EventCb<any[]>; opts: Partial< EventOpts<any[]> >; }[] } = {
         'collision': [],
         'collisionSceneBoundary': [],
         'velocityChange': [],
@@ -193,21 +194,25 @@ export class InteractableEntity extends SceneEntity {
         return this.velocity;
     }
     
-    addEventListener(type: Events, listener: EventCb, opts?: Partial<EventOpts>) {
+    addEventListener<T extends any[]>(type: Events, listener: EventCb<T>, opts?: Partial< EventOpts<T> >) {
         this.eventListeners[type].push({
-            cb: listener,
-            opts: opts ?? {},
+            cb: listener as EventCb<any[]>,
+            opts: (opts as Partial<EventOpts<any[]>>) ?? {},
         });
         return this;
     }
     
-    removeEventListener(type: Events, listener: EventCb) {
+    removeEventListener<T extends any[]>(type: Events, listener: EventCb<T>) {
         this.eventListeners[type] = this.eventListeners[type].filter(eventItem => eventItem.cb !== listener);
         return this;
     }
     
     dispatchEvent(type: Events, ...args: any[]) {
         for (const eventItem of this.eventListeners[type]) {
+            if (eventItem.opts.predicate && !eventItem.opts.predicate(...args)) {
+                // A predicate was specified but not met; do not proceed (and do not count this as "once"'d)
+                continue;
+            }
             eventItem.cb(...args);
             if (eventItem.opts.once === true) {
                 this.removeEventListener(type, eventItem.cb);
