@@ -18,6 +18,7 @@ type SceneObjects = {
     walls: InteractableEntity[];
     door: SceneEntity;
     ladder: InteractableEntity;
+    chest: InteractableEntity;
     torch: {
         base: InteractableEntity;
         fire: Container;
@@ -369,6 +370,18 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         };
         this.onTickCbArr.push(updateParticleOnTick);
         
+        
+        // Add chest
+        const chestEnt = new InteractableEntity({
+            item: new Sprite(mainSheet['chest1Closed']),
+            name: 'chest',
+            bindZToY: true,
+            zBindingMultiplier
+        });
+        chestEnt.position.set(8 * tileSize, 2 * tileSize);
+        chestEnt.setBoundingBox({ y: 3, height: -3 }, { mode: 'offset' });
+        chestEnt.addTo(sceneContainer);
+        
         return {
             playerChar,
             npcChar,
@@ -376,6 +389,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             walls: wallEntities,
             door: doorEntity,
             ladder: ladderObj,
+            chest: chestEnt,
             torch: {
                 base: torchEntity,
                 fire: torchFireContainer,
@@ -394,6 +408,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             this.items.npcChar,
             this.items.torch.base,
             this.items.ladder,
+            this.items.chest,
         ]
     }
     
