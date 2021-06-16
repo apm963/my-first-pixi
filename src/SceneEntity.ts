@@ -75,6 +75,17 @@ export class SceneEntity {
         return geometry.zIndex ?? item?.zIndex ?? 0;
     }
     
+    get position(): {set: (x: number, y: number) => { x: number; y: number; }} {
+        // TODO: Provide the same API for position as DisplayObject (/ Sprite) does
+        return {
+            set: (x: number, y: number) => {
+                this.x = x;
+                this.y = y;
+                return {x, y};
+            }
+        }
+    }
+    
     set width(val: number) {
         this.setDimension('width', val);
     }
