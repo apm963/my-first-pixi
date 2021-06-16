@@ -1,3 +1,6 @@
+import { Container } from "pixi.js";
+import { CollisionInfo, InteractableEntity } from "./InteractableEntity";
+
 export const HIT_LEFT = 0b0001;
 export const HIT_RIGHT = 0b0010;
 export const HIT_UP = 0b0100;
@@ -76,3 +79,10 @@ export function hitTestRectangle(r1: HitRectangle, r2: HitRectangle): [false, 0b
     
     return [false, 0b0];
 };
+
+export function getCollisionsFlat(collisions: CollisionInfo['collisions']): (Container | InteractableEntity)[] {
+    return Object.values(collisions).reduce((carry, collisionItemsOnSide) => {
+        collisionItemsOnSide.forEach(item => carry.push(item));
+        return carry;
+    }, []);
+}

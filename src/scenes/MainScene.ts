@@ -9,7 +9,7 @@ import { torch } from '../particles/fire';
 import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, randomTrue, tau } from "../utils";
 import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from "../InteractableEntity";
 import { PartialDimensions, SceneEntity } from "../SceneEntity";
-import { HIT_LEFT, HIT_RIGHT } from "../collisions";
+import { getCollisionsFlat, HIT_LEFT, HIT_RIGHT } from "../collisions";
 
 type SceneObjects = {
     playerChar: CharacterEntity;
@@ -207,10 +207,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const doorTiles = doorContainer.children as Sprite[];
         
         const actionOpenDoor = (collisionInfo: CollisionInfo) => {
-            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
-                collisionItemsOnSide.forEach(item => carry.push(item));
-                return carry;
-            }, []);
+            const collisionItems = getCollisionsFlat(collisionInfo.collisions);
             
             if (!collisionItems.includes(playerChar)) {
                 // Reregister
@@ -299,10 +296,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         let npcPreCollisionVx: number = 0;
         
         npcChar.addEventListener('collision', (collisionInfo: CollisionInfo) => {
-            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
-                collisionItemsOnSide.forEach(item => carry.push(item));
-                return carry;
-            }, []);
+            const collisionItems = getCollisionsFlat(collisionInfo.collisions);
             
             // Handle non-player collisions differently
             if (!collisionItems.includes(playerChar)) {
@@ -381,6 +375,9 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         chestEnt.position.set(8 * tileSize, 2 * tileSize);
         chestEnt.setBoundingBox({ y: 3, height: -3 }, { mode: 'offset' });
         chestEnt.addTo(sceneContainer);
+        chestEnt.addEventListener('collision', (collisionInfo: CollisionInfo) => {
+            console.log('TODO: Open and transfer item(s) to inventory');
+        }, { once: true, predicate: (collisionInfo) => getCollisionsFlat(collisionInfo.collisions)[0] === playerChar });
         
         return {
             playerChar,
