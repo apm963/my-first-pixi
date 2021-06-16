@@ -213,10 +213,11 @@ export class InteractableEntity extends SceneEntity {
                 // A predicate was specified but not met; do not proceed (and do not count this as "once"'d)
                 continue;
             }
-            eventItem.cb(...args);
+            const cb = eventItem.cb;
             if (eventItem.opts.once === true) {
                 this.removeEventListener(type, eventItem.cb);
             }
+            cb(...args);
         }
     }
     
