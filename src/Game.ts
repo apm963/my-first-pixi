@@ -102,7 +102,8 @@ export class Game {
         const [
             arrowUp, arrowRight, arrowDown, arrowLeft,
             wKey, dKey, sKey, aKey,
-            minusKey, equalsKey, iKey
+            inventoryKey,
+            minusKey, equalsKey, debugKey
         ] = [
             new KeyboardListener('ArrowUp'),
             new KeyboardListener('ArrowRight'),
@@ -112,6 +113,7 @@ export class Game {
             new KeyboardListener('KeyD'),
             new KeyboardListener('KeyS'),
             new KeyboardListener('KeyA'),
+            new KeyboardListener('KeyE'),
             new KeyboardListener('Minus'),
             new KeyboardListener('Equal'),
             new KeyboardListener('KeyI'),
@@ -136,10 +138,12 @@ export class Game {
         arrowLeft.press = aKey.press = () => changeVelocityCircular('vx', -playerMaxVelocity);
         arrowLeft.release = aKey.release = () => changeVelocityCircular('vx', playerMaxVelocity);
         
+        inventoryKey.press = () => console.log(playerChar.inventory);
+        
         minusKey.press = () => setZoom(this.worldScale - 0.5);
         equalsKey.press = () => setZoom(this.worldScale + 0.5);
         
-        iKey.press = () => console.log(playerChar.getDimensions());
+        debugKey.press = () => console.log(playerChar.getDimensions());
         
     }
     
