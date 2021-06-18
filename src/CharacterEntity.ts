@@ -1,4 +1,4 @@
-import { Container, Sprite } from "pixi.js";
+import { Container, DisplayObject, Sprite } from "pixi.js";
 import { InteractableEntity } from "./InteractableEntity";
 
 export interface InventoryItem {
@@ -9,7 +9,7 @@ export interface InventoryItem {
     sprite: Sprite | Container;
 }
 
-export class CharacterEntity extends InteractableEntity {
+export class CharacterEntity<T extends null | DisplayObject | Sprite | Container> extends InteractableEntity<T> {
     
     inventory: InventoryItem[] = [];
     // REVIEW: Should we add dialog?

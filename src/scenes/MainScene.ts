@@ -12,19 +12,19 @@ import { PartialDimensions, SceneEntity } from "../SceneEntity";
 import { getCollisionsFlat, HIT_LEFT, HIT_RIGHT } from "../collisions";
 
 type SceneObjects = {
-    playerChar: CharacterEntity;
-    npcChar: CharacterEntity;
+    playerChar: CharacterEntity<Container>;
+    npcChar: CharacterEntity<Container>;
     floor: Container;
-    walls: InteractableEntity[];
-    door: SceneEntity;
-    ladder: InteractableEntity;
-    chest: InteractableEntity;
+    walls: InteractableEntity<Sprite>[];
+    door: SceneEntity<Container>;
+    ladder: InteractableEntity<Sprite>;
+    chest: InteractableEntity<Sprite>;
     torch: {
-        base: InteractableEntity;
+        base: InteractableEntity<Sprite>;
         fire: Container;
         fireEmitter: particles.Emitter;
     };
-    actions: InteractableEntity[];
+    actions: InteractableEntity<null>[];
 };
 
 export class MainScene extends GameSceneBase implements GameSceneIface<SceneObjects> {
@@ -46,7 +46,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
     }
     
-    getItemsFlat(): (Container | InteractableEntity | SceneEntity)[] {
+    getItemsFlat(): (Container | InteractableEntity<any> | SceneEntity<any>)[] {
         return [
             this.items.playerChar,
             this.items.npcChar,
@@ -78,10 +78,10 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         type GenerateSpritesFromAtlasMap = {
             (mapRowsCols: ((string | null)[] | null)[], zIndex?: number): Sprite[];
-            <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex: number, wrapperClass: new (opts: { item: SceneEntity['item'], ident: SceneEntity['ident'] }) => T): T[];
+            <T extends SceneEntity<Sprite>>(mapRowsCols: ((string | null)[] | null)[], zIndex: number, wrapperClass: new (opts: { item: SceneEntity<Sprite>['item'], ident: SceneEntity<Sprite>['ident'] }) => T): T[];
         };
         
-        const generateSpritesFromAtlasMap: GenerateSpritesFromAtlasMap = <T extends SceneEntity>(mapRowsCols: ((string | null)[] | null)[], zIndex?: number, wrapperClass?: new (opts: { item: SceneEntity['item'], ident: SceneEntity['ident'] }) => T) => {
+        const generateSpritesFromAtlasMap: GenerateSpritesFromAtlasMap = <T extends SceneEntity<Sprite>>(mapRowsCols: ((string | null)[] | null)[], zIndex?: number, wrapperClass?: new (opts: { item: SceneEntity<Sprite>['item'], ident: SceneEntity<Sprite>['ident'] }) => T) => {
             const sprites: (Sprite | T)[] = [];
             
             mapRowsCols.forEach((mapRow, row) => {
@@ -126,7 +126,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             .fill(null)
             .map(() => Array(mapSize.width).fill('floorTile'));
         
-        const actions: InteractableEntity[] = [];
+        const actions: InteractableEntity<null>[] = [];
         
         // Convert some to tiles to dirt floor
         backgroundFloorMap[0] = ['floorDirtTopLeft', ...Array(mapSize.width - 2).fill('floorDirtTop'), 'floorDirtTopRight'];
@@ -223,7 +223,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             });
         };
         
-        const doorAction = new InteractableEntity();
+        const doorAction = new InteractableEntity<null>();
         doorAction.x = doorEntity.x;
         doorAction.y = doorEntity.y + doorEntity.height;
         doorAction.width = tileSize * 2;
@@ -242,7 +242,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         ladderObj.addTo(sceneContainer);
         
         // ** Characters
-        const handleCharacterFacingDirection = (char: CharacterEntity, changedVectors: (keyof Velocity)[]) => {
+        const handleCharacterFacingDirection = (char: CharacterEntity<Container | Sprite>, changedVectors: (keyof Velocity)[]) => {
             if (!changedVectors.includes('vx')) {
                 return;
             }
@@ -388,7 +388,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
             
             playerChar.addInventoryItem(inventoryItem);
             
-            (chestEnt.item as Sprite).texture = mainSheet['chest1OpenEmpty'];
+            chestEnt.item.texture = mainSheet['chest1OpenEmpty'];
             
         }, { once: true, predicate: (collisionInfo) => getCollisionsFlat(collisionInfo.collisions)[0] === playerChar });
         
@@ -410,7 +410,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
     }
     
     /** Returns an array of objects that can be collided with */
-    getSolidObjects(): (DisplayObject | InteractableEntity)[] {
+    getSolidObjects(): (DisplayObject | InteractableEntity<any>)[] {
         return [
             // REVIEW: Consider genericizing this further, maybe with this property existing on the InteractableEntity
             ...this.items.walls,

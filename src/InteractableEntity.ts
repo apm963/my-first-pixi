@@ -1,5 +1,6 @@
 import { Container } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
+import { DisplayObject } from "pixi.js";
 import { Dimensions, PartialDimensions, SceneEntity } from "./SceneEntity";
 
 export interface Velocity {
@@ -8,10 +9,10 @@ export interface Velocity {
 }
 
 export type CollisionInfo = {
-    entity: (Container | InteractableEntity);
+    entity: (Container | InteractableEntity<any>);
     occurred: boolean;
     sideOfEntityBit: number;
-    collisions: { [directionBit: number]: (Container | InteractableEntity)[] };
+    collisions: { [directionBit: number]: (Container | InteractableEntity<any>)[] };
 };
 
 /**
@@ -34,7 +35,7 @@ interface EventOpts<G extends any[]> {
     predicate: (...args: G) => boolean;
 };
 
-export class InteractableEntity extends SceneEntity {
+export class InteractableEntity<T extends null | DisplayObject | Sprite | Container> extends SceneEntity<T> {
     
     boundingBoxEnabled: boolean = true;
     protected boundingBoxMode: BoundingBoxMode = 'absolute';
@@ -70,7 +71,7 @@ export class InteractableEntity extends SceneEntity {
      * @description Provides the ability to set a velocity vector using traditional methods while still triggering the
      * velocityChange event. Also provides a convenient way to set both velocity vectors.
      */
-    get velocity(): Velocity & { set: InteractableEntity['setVelocity'] } {
+    get velocity(): Velocity & { set: InteractableEntity<T>['setVelocity'] } {
         
         const target = {
             ...this._velocity,

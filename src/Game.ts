@@ -228,7 +228,7 @@ export class Game {
         
         // Check collisions
         const collisionCheckItems = [...movedItems, ...currentScene.items.actions].filter(Game.collisionCheckTypeGuard);
-        const objectsToCheck: (DisplayObject | InteractableEntity)[] = currentScene.getSolidObjects()
+        const objectsToCheck: (DisplayObject | InteractableEntity<any>)[] = currentScene.getSolidObjects()
             .filter(ent => !(ent instanceof InteractableEntity) || ent.boundingBoxEnabled);
         const computedCollisionInfo: CollisionInfo[] = this.checkCollisions(collisionCheckItems, objectsToCheck);
         const collidedEntities = computedCollisionInfo.filter(collisionInfo => collisionInfo.occurred);
@@ -236,7 +236,7 @@ export class Game {
         // Dispatch collision events
         collidedEntities.forEach(collisionInfo => {
             const collisionCheckItem = collisionInfo.entity;
-            const collisionItems: (Container | InteractableEntity)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
+            const collisionItems: (Container | InteractableEntity<any>)[] = Object.values(collisionInfo.collisions).reduce((carry, collisionItemsOnSide) => {
                 collisionItemsOnSide.forEach(item => carry.push(item));
                 return carry;
             }, []);
@@ -273,10 +273,10 @@ export class Game {
      * @param allObjectsToCheck An array of objects to check collisions from collisionCheckItems against
      * @returns An array of collision details. This will not always have the same index mapping to the source collisionCheckItems array.
      */
-    checkCollisions(collisionCheckItems: (Container | InteractableEntity)[], allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo[] {
+    checkCollisions(collisionCheckItems: (Container | InteractableEntity<any>)[], allObjectsToCheck: (InteractableEntity<any> | DisplayObject)[]): CollisionInfo[] {
         let collisionDict = collisionCheckItems.map(collisionCheckItem => this.checkCollision(collisionCheckItem, allObjectsToCheck));
         
-        const unmovedCollisionCheckItems: (Container | InteractableEntity)[] = [];
+        const unmovedCollisionCheckItems: (Container | InteractableEntity<any>)[] = [];
         
         collisionDict.forEach((collisionInfo, i) => {
             if (!collisionInfo.occurred) {
@@ -314,7 +314,7 @@ export class Game {
      * @param allObjectsToCheck A list of items to check if the collisionCheckItem collided with
      * @returns Collision check results
      */
-    checkCollision(collisionCheckItem: Container | InteractableEntity, allObjectsToCheck: (InteractableEntity | DisplayObject)[]): CollisionInfo {
+    checkCollision(collisionCheckItem: Container | InteractableEntity<any>, allObjectsToCheck: (InteractableEntity<any> | DisplayObject)[]): CollisionInfo {
         
         const collisionInfo: CollisionInfo = {
             entity: collisionCheckItem,
@@ -329,7 +329,7 @@ export class Game {
         
         // Solid collisions
         for (const i in objectsToCheck) {
-            const container = objectsToCheck[i] as Container | InteractableEntity;
+            const container = objectsToCheck[i] as Container | InteractableEntity<any>;
             const targetBoundingBox = 'getBoundingBox' in container ? container.getBoundingBox() : container;
             if ('visible' in container ? !container.visible : container.item?.visible === false) {
                 continue;
@@ -493,6 +493,6 @@ export class Game {
         
     }
     
-    static collisionCheckTypeGuard = (item: InteractableEntity | SceneEntity | Container): item is (InteractableEntity | Container) => (item instanceof InteractableEntity || item instanceof Container);
+    static collisionCheckTypeGuard = (item: InteractableEntity<any> | SceneEntity<any> | Container): item is (InteractableEntity<any> | Container) => (item instanceof InteractableEntity || item instanceof Container);
     
 }

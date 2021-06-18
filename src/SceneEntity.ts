@@ -17,21 +17,21 @@ export interface PartialDimensions {
 
 type Geometry = PartialDimensions & { zIndex: null | number; };
 
-interface Opts {
-    item?: SceneEntity['item'];
+interface Opts<T extends null | DisplayObject | Sprite | Container> {
+    item?: SceneEntity<T>['item'];
     /** @description Used to uniquely identify this specific entity instance. Useful for debugging */
-    name?: SceneEntity['name'];
+    name?: SceneEntity<T>['name'];
     /** @description Used for classification of this entity instance. Useful for iteratively applying properties to specific tiles (based on texture name) */
-    ident?: SceneEntity['ident'];
-    bindZToY?: SceneEntity['bindZToY'];
-    forceZInt?: SceneEntity['forceZInt'];
-    zBindingMultiplier?: SceneEntity['zBindingMultiplier'];
-    zBindingOffset?: SceneEntity['zBindingOffset'];
+    ident?: SceneEntity<T>['ident'];
+    bindZToY?: SceneEntity<T>['bindZToY'];
+    forceZInt?: SceneEntity<T>['forceZInt'];
+    zBindingMultiplier?: SceneEntity<T>['zBindingMultiplier'];
+    zBindingOffset?: SceneEntity<T>['zBindingOffset'];
     geometry?: PartialDimensions;
-    mirrorTarget?: SceneEntity['mirrorTarget'];
+    mirrorTarget?: SceneEntity<T>['mirrorTarget'];
 }
 
-export class SceneEntity {
+export class SceneEntity<T extends null | DisplayObject | Sprite | Container> {
     
     protected geometry: Geometry = {
         width: null,
@@ -45,7 +45,7 @@ export class SceneEntity {
     forceZInt: boolean = false; // REVIEW: Current technique is Math.floor. Reevaluate if this is desired (or desired as a setting)
     zBindingMultiplier: number = 1;
     zBindingOffset: number = 0;
-    item: null | DisplayObject | Sprite | Container = null;
+    item: T = null as T;
     name: string = uuidv4();
     ident: null | string = null;
     mirrorTarget: null | Sprite = null;
@@ -106,7 +106,7 @@ export class SceneEntity {
         this.setDimension('zIndex', val);
     }
     
-    constructor(opts: Opts = {}) {
+    constructor(opts: Opts<T> = {}) {
         Object.entries(opts).forEach(([key, val]) => this[key as keyof this] = val);
         // Force set zIndex by spoofing a y change
         if (this.bindZToY) {
@@ -127,7 +127,7 @@ export class SceneEntity {
         return dimensions;
     }
     
-    protected setDimension(geometry: keyof SceneEntity['geometry'], val: number) {
+    protected setDimension(geometry: keyof SceneEntity<T>['geometry'], val: number) {
         
         if (geometry === 'zIndex' && this.forceZInt) {
             val = Math.round(val);
