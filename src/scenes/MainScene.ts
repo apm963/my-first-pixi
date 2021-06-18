@@ -2,7 +2,7 @@ import { DisplayObject, Loader, Sprite, Texture } from "pixi.js";
 import { Container } from "@pixi/display";
 import * as particles from 'pixi-particles';
 
-import { CharacterEntity } from "../CharacterEntity";
+import { CharacterEntity, InventoryItem } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
@@ -376,7 +376,20 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         chestEnt.setBoundingBox({ y: 3, height: -3 }, { mode: 'offset' });
         chestEnt.addTo(sceneContainer);
         chestEnt.addEventListener('collision', (collisionInfo: CollisionInfo) => {
-            console.log('TODO: Open and transfer item(s) to inventory');
+            
+            const inventoryItem: InventoryItem = {
+                // TODO: Create a dictionary / method somewhere to get this struct. Allow specifying &/ merging qty and other modifier fields.
+                name: 'no sure yet',
+                ident: 'follow the same paradigm as the Entities for this thing',
+                qty: 1,
+                maxQty: 1,
+                sprite: new Sprite(mainSheet['bomb']),
+            };
+            
+            playerChar.addInventoryItem(inventoryItem);
+            
+            (chestEnt.item as Sprite).texture = mainSheet['chest1OpenEmpty'];
+            
         }, { once: true, predicate: (collisionInfo) => getCollisionsFlat(collisionInfo.collisions)[0] === playerChar });
         
         return {
