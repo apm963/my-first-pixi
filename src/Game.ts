@@ -506,20 +506,25 @@ export class Game {
         // const wallSheet = resources[spriteSheetTextureAtlasFiles.walls]?.textures ?? {};
         const mainSheet = resources[spriteSheetTextureAtlasFiles.main]?.textures ?? {};
         
-        const inventoryItemDefinitionList: Game['inventoryItemDefinitions'] = {
-            // NOTE: 'name' prop gets set automatically below for less typing
+        const partialDefinitionList: { [name in GameInventoryItemNames]: Omit<InventoryItemDefinition, 'name'> } = {
             'bomb': {
-                name: '',
                 maxQty: 1,
                 sprite: new Sprite(mainSheet['bomb'])
             }
         };
         
-        for (let key in inventoryItemDefinitionList) {
-            inventoryItemDefinitionList[key as GameInventoryItemNames].name = key;
+        // Automatically fill in 'name' property to complete typings
+        const inventoryItemDefinitionList: Partial<Game['inventoryItemDefinitions']> = {};
+        
+        for (let key in partialDefinitionList) {
+            const typedKey = key as GameInventoryItemNames;
+            inventoryItemDefinitionList[typedKey] = {
+                ...partialDefinitionList[typedKey],
+                name: typedKey,
+            };
         }
         
-        return inventoryItemDefinitionList;
+        return inventoryItemDefinitionList as Game['inventoryItemDefinitions'];
     }
     
 }
