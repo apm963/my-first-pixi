@@ -10,7 +10,7 @@ import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, rando
 import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from "../InteractableEntity";
 import { PartialDimensions, SceneEntity } from "../SceneEntity";
 import { getCollisionsFlat, HIT_LEFT, HIT_RIGHT } from "../collisions";
-import { createInventoryItem } from "../Inventory";
+import { Inventory } from "../Inventory";
 
 type SceneObjects = {
     playerChar: CharacterEntity<Container>;
@@ -274,6 +274,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         playerChar.velocity.vy = 0;
         playerChar.maxVelocity.vx = playerMaxVelocity;
         playerChar.maxVelocity.vy = playerMaxVelocity;
+        playerChar.inventory.maxSlots = 5;
         playerChar.addEventListener('velocityChange', handleCharacterFacingDirection);
         
         // Add NPCs
@@ -378,9 +379,9 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         chestEnt.addTo(sceneContainer);
         chestEnt.addEventListener('collision', (collisionInfo: CollisionInfo) => {
             
-            const inventoryItem = createInventoryItem(inventoryItemDefinitions.bomb, 1);
+            const inventoryItem = Inventory.createItemFromDefinition(inventoryItemDefinitions.bomb, 1);
             
-            playerChar.addInventoryItem(inventoryItem);
+            playerChar.inventory.addItem(inventoryItem);
             
             chestEnt.item.texture = mainSheet['chest1OpenEmpty'];
             

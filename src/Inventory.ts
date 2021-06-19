@@ -7,16 +7,33 @@ export interface InventoryItemDefinition {
     sprite: Sprite | Container;
 }
 
-export type InventoryInstance = InventoryItemDefinition & {
+export interface InventoryInstance extends InventoryItemDefinition {
     qty: number;
     uuid: string;
     // TODO: Add modifiers (eg. damage modifier, power/upgrade multiplier, etc.)
 };
 
-export function createInventoryItem(definition: InventoryItemDefinition, qty: number): InventoryInstance {
-    return {
-        ...definition,
-        qty,
-        uuid: uuidv4(),
-    };
+/** @description Inventory management system */
+export class Inventory {
+    
+    items: InventoryInstance[] = [];
+    maxSlots: number = 99;
+    slots: number[] = [];
+    
+    addItem(inventoryItem: InventoryInstance) {
+        this.items.push(inventoryItem);
+    }
+    
+    removeItem(inventoryItem: InventoryInstance) {
+        this.items = this.items.filter(existingItem => existingItem !== inventoryItem);
+    }
+    
+    static createItemFromDefinition(definition: InventoryItemDefinition, qty: number): InventoryInstance {
+        return {
+            ...definition,
+            qty,
+            uuid: uuidv4(),
+        };
+    }
+    
 }
