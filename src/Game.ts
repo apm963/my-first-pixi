@@ -143,7 +143,7 @@ export class Game {
         arrowLeft.press = aKey.press = () => changeVelocityCircular('vx', -playerMaxVelocity);
         arrowLeft.release = aKey.release = () => changeVelocityCircular('vx', playerMaxVelocity);
         
-        inventoryKey.press = () => console.table(playerChar.inventory);
+        inventoryKey.press = () => console.table(playerChar.inventory.items);
         
         minusKey.press = () => setZoom(this.worldScale - 0.5);
         equalsKey.press = () => setZoom(this.worldScale + 0.5);
