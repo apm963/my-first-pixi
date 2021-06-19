@@ -2,7 +2,7 @@ import { DisplayObject, Loader, Sprite, Texture } from "pixi.js";
 import { Container } from "@pixi/display";
 import * as particles from 'pixi-particles';
 
-import { CharacterEntity, InventoryItem } from "../CharacterEntity";
+import { CharacterEntity } from "../CharacterEntity";
 import { Game } from "../Game";
 import { GameSceneBase, GameSceneIface } from "../GameScene";
 import { torch } from '../particles/fire';
@@ -10,6 +10,7 @@ import { calcCenter, calcScaledPos, calcZFromGeometry, createDebugOverlay, rando
 import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from "../InteractableEntity";
 import { PartialDimensions, SceneEntity } from "../SceneEntity";
 import { getCollisionsFlat, HIT_LEFT, HIT_RIGHT } from "../collisions";
+import { createInventoryItem } from "../Inventory";
 
 type SceneObjects = {
     playerChar: CharacterEntity<Container>;
@@ -63,7 +64,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         
         const { game, resources } = this;
         const { mapSize } = MainScene;
-        const { displayScalingOffset, worldScale } = game;
+        const { displayScalingOffset, worldScale, inventoryItemDefinitions } = game;
         const { spriteSheetTextureAtlasFiles, tileSize, playerMaxVelocity } = Game;
         const zBindingMultiplier = 1 / tileSize;
         const charEntHitboxHeight = 6;
@@ -377,14 +378,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         chestEnt.addTo(sceneContainer);
         chestEnt.addEventListener('collision', (collisionInfo: CollisionInfo) => {
             
-            const inventoryItem: InventoryItem = {
-                // TODO: Create a dictionary / method somewhere to get this struct. Allow specifying &/ merging qty and other modifier fields.
-                name: 'no sure yet',
-                ident: 'follow the same paradigm as the Entities for this thing',
-                qty: 1,
-                maxQty: 1,
-                sprite: new Sprite(mainSheet['bomb']),
-            };
+            const inventoryItem = createInventoryItem(inventoryItemDefinitions.bomb, 1);
             
             playerChar.addInventoryItem(inventoryItem);
             

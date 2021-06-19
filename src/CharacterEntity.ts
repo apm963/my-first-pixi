@@ -1,24 +1,17 @@
 import { Container, DisplayObject, Sprite } from "pixi.js";
 import { InteractableEntity } from "./InteractableEntity";
-
-export interface InventoryItem {
-    name: string;
-    ident: string; // Or maybe "classifier"
-    qty: number;
-    maxQty: number;
-    sprite: Sprite | Container;
-}
+import { InventoryInstance } from "./Inventory";
 
 export class CharacterEntity<T extends null | DisplayObject | Sprite | Container> extends InteractableEntity<T> {
     
-    inventory: InventoryItem[] = [];
+    inventory: InventoryInstance[] = [];
     // REVIEW: Should we add dialog?
     
-    addInventoryItem(inventoryItem: InventoryItem) {
+    addInventoryItem(inventoryItem: InventoryInstance) {
         this.inventory.push(inventoryItem);
     }
     
-    removeInventoryItem(inventoryItem: InventoryItem) {
+    removeInventoryItem(inventoryItem: InventoryInstance) {
         this.inventory = this.inventory.filter(existingItem => existingItem !== inventoryItem);
     }
     

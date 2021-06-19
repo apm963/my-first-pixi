@@ -1,4 +1,4 @@
-import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject } from "pixi.js";
+import { Application, Loader, Text, TextStyle, settings, SCALE_MODES, Container, DisplayObject, Sprite } from "pixi.js";
 import { calcCenter, calcZFromGeometry } from "./utils";
 import { InteractableEntity, Velocity, CollisionInfo } from "./InteractableEntity";
 import { GameSceneBase, GameSceneIface } from "./GameScene";
@@ -6,18 +6,21 @@ import { MainScene } from "./scenes/MainScene";
 import { KeyboardListener } from "./KeyboardListener";
 import { hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
 import { Dimensions, SceneEntity } from "./SceneEntity";
+import { InventoryItemDefinition } from "./Inventory";
 
 // TODO: Move these to this.loader
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
 const resources = loader.resources;
 
 type GameState = (delta: number) => void;
+type GameInventoryItemNames = 'bomb';
 
 export class Game {
     
     app: Application;
     currentScene: null | (GameSceneBase & GameSceneIface<unknown>) = null;
     state: GameState = this.initState;
+    inventoryItemDefinitions: { [name in GameInventoryItemNames]: InventoryItemDefinition } = {} as Game['inventoryItemDefinitions']; // This gets set within setup
     
     static playerMaxVelocity = 3 / 60; // Expressed in tiles per second
     static tileSize = 16;
@@ -66,6 +69,8 @@ export class Game {
     }
     
     setup = () => {
+        
+        this.inventoryItemDefinitions = Game.generateInventoryItemDefinitions(resources);
         
         const mainScene = new MainScene(this, resources);
         
@@ -494,5 +499,27 @@ export class Game {
     }
     
     static collisionCheckTypeGuard = (item: InteractableEntity<any> | SceneEntity<any> | Container): item is (InteractableEntity<any> | Container) => (item instanceof InteractableEntity || item instanceof Container);
+    
+    static generateInventoryItemDefinitions(resources: Loader['resources']): Game['inventoryItemDefinitions'] {
+        
+        const { spriteSheetTextureAtlasFiles } = Game;
+        // const wallSheet = resources[spriteSheetTextureAtlasFiles.walls]?.textures ?? {};
+        const mainSheet = resources[spriteSheetTextureAtlasFiles.main]?.textures ?? {};
+        
+        const inventoryItemDefinitionList: Game['inventoryItemDefinitions'] = {
+            // NOTE: 'name' prop gets set automatically below for less typing
+            'bomb': {
+                name: '',
+                maxQty: 1,
+                sprite: new Sprite(mainSheet['bomb'])
+            }
+        };
+        
+        for (let key in inventoryItemDefinitionList) {
+            inventoryItemDefinitionList[key as GameInventoryItemNames].name = key;
+        }
+        
+        return inventoryItemDefinitionList;
+    }
     
 }
