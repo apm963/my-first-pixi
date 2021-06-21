@@ -283,7 +283,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const npcSprite = new Sprite(mainSheet['characterEyePatch']);
         npcSprite.anchor.set(0.5, 0.5);
         npcSprite.scale.x *= -1;
-        npcSprite.position.set(...calcCenter(null, playerSprite));
+        npcSprite.position.set(...calcCenter(null, npcSprite));
         npcContainer.position.set(...calcScaledPos((mapSize.width - 7), 0, tileSize));
         npcContainer.addChild(npcSprite);
         // createDebugOverlay(npcContainer);
