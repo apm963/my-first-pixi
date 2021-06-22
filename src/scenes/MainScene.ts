@@ -31,7 +31,6 @@ type SceneObjects = {
 export class MainScene extends GameSceneBase implements GameSceneIface<SceneObjects> {
     
     items: SceneObjects;
-    sceneContainer = new Container();
     
     onTickCbArr: ((delta: number) => void)[] = [];
     
@@ -62,7 +61,7 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
     
     generateObjects(): SceneObjects {
         
-        const { game, resources } = this;
+        const { game, resources, sceneContainer } = this;
         const { mapSize } = MainScene;
         const { displayScalingOffset, worldScale, inventoryItemDefinitions } = game;
         const { spriteSheetTextureAtlasFiles, tileSize, playerMaxVelocity } = Game;
@@ -70,7 +69,6 @@ export class MainScene extends GameSceneBase implements GameSceneIface<SceneObje
         const charEntHitboxHeight = 6;
         
         // Create scene that contains all of the objects we want to render. This greatly simplifies scaling, positioning, and handling device pixel ratio.
-        const sceneContainer = this.sceneContainer;
         sceneContainer.scale.set(displayScalingOffset * worldScale);
         sceneContainer.sortableChildren = true;
         
