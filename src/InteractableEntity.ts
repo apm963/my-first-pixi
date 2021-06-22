@@ -28,7 +28,7 @@ export interface SetBoundingBoxOpts {
     boundingBoxDebugOverlay: Sprite;
 };
 
-type Events = 'collision' | 'collisionSceneBoundary' | 'velocityChange';
+type Events = 'collision' | 'collisionSceneBoundary' | 'velocityChange' | 'click' | 'hoverEnter' | 'hoverExit';
 type EventCb<R extends any[]> = (...args: R) => void;
 interface EventOpts<G extends any[]> {
     once: boolean;
@@ -65,6 +65,9 @@ export class InteractableEntity<T extends null | DisplayObject | Sprite | Contai
         'collision': [],
         'collisionSceneBoundary': [],
         'velocityChange': [],
+        'click': [],
+        'hoverEnter': [],
+        'hoverExit': [],
     };
     
     /** velocity getter
