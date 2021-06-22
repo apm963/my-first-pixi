@@ -32,7 +32,7 @@ export function randomTrue(chanceFloat: number) {
     return Math.random() < chanceFloat;
 }
 
-export function createDebugOverlay(overlayItem: Container | InteractableEntity, addToContainer?: Container, opts?: Partial<Sprite>): Sprite {
+export function createDebugOverlay(overlayItem: Container | InteractableEntity<any>, addToContainer?: Container, opts?: Partial<Sprite>): Sprite {
     const bg = new Sprite(Texture.WHITE);
     bg.x = overlayItem.x;
     bg.y = overlayItem.y;
