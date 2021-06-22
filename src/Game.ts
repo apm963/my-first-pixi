@@ -7,6 +7,7 @@ import { KeyboardListener } from "./KeyboardListener";
 import { hitTestRectangle, HIT_DOWN, HIT_LEFT, HIT_RIGHT, HIT_UP } from "./collisions";
 import { Dimensions, SceneEntity } from "./SceneEntity";
 import { InventoryItemDefinition } from "./Inventory";
+import { UiHudScene } from "./scenes/UiHudScene";
 
 // TODO: Move these to this.loader
 const loader = Loader.shared; // or create a dedicated one with `new Loader()`
@@ -73,9 +74,13 @@ export class Game {
         this.inventoryItemDefinitions = Game.generateInventoryItemDefinitions(resources);
         
         const mainScene = new MainScene(this, resources);
+        const uiHudScene = new UiHudScene(this, resources);
         
         // Add scene to main app stage
         this.currentScene = mainScene.addToGame(this.app.stage);
+        
+        // Add UI to stage
+        uiHudScene.addToGame(this.app.stage);
         
         // Render this initial stage
         this.app.renderer.render(this.app.stage);
