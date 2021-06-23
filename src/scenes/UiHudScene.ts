@@ -11,6 +11,7 @@ import { CollisionInfo, InteractableEntity, SetBoundingBoxOpts, Velocity } from 
 import { PartialDimensions, SceneEntity } from "../SceneEntity";
 import { getCollisionsFlat, HIT_LEFT, HIT_RIGHT } from "../collisions";
 import { Inventory } from "../Inventory";
+import { MainScene } from "./MainScene";
 
 type SceneObjects = {
     playerInventorySlots: InteractableEntity<Container>[];
@@ -21,6 +22,8 @@ export class UiHudScene extends GameSceneBase implements UiSceneIface<SceneObjec
     items: SceneObjects;
     
     // static mapSize = { width: 10, height: 10 };
+    
+    slotSpriteMap: {[slotIndex: number]: Sprite} = {};
     
     constructor(
         public game: Game,
@@ -51,7 +54,7 @@ export class UiHudScene extends GameSceneBase implements UiSceneIface<SceneObjec
         const mainSheet = resources[spriteSheetTextureAtlasFiles.main]?.textures ?? {};
         
         
-        const generateSlot = (texture: null | Texture<Resource>, innerSize: number) => {
+        const generateSlot = (texture: null | Texture<Resource>, innerSize: number): [InteractableEntity<Container>, Sprite] => {
             const borderSizePx = 1;
             const innerDims = { width: innerSize, height: innerSize };
             const outerDims = {width: innerSize + (borderSizePx * 2), height: innerSize + (borderSizePx * 2)};
@@ -86,20 +89,17 @@ export class UiHudScene extends GameSceneBase implements UiSceneIface<SceneObjec
             
             const entity = new InteractableEntity({ item: slotContainer });
             
-            return entity;
+            return [entity, itemSprite];
         };
         
         const playerInventorySlots: InteractableEntity<Container>[] = [];
-        const playerSlotItemMap: (Texture<Resource> | undefined)[] = [
-            undefined,
-            undefined,
-            mainSheet['bomb']
-        ];
+        const playerSlotItemMap: (Texture<Resource> | undefined)[] = []; // TODO: Support loading save
         
         for (let i = 0; i < 7; i++) {
-            const slotEnt = generateSlot(playerSlotItemMap[i] ?? null, 14);
+            const [slotEnt, slotItemSprite] = generateSlot(playerSlotItemMap[i] ?? null, 14);
             slotEnt.position.set((tileSize * (1 + i)) + (tileSize / 2), (tileSize * 8) + (tileSize / 2));
             slotEnt.addTo(sceneContainer);
+            this.slotSpriteMap[i] = slotItemSprite;
         }
         
         return {
@@ -112,7 +112,34 @@ export class UiHudScene extends GameSceneBase implements UiSceneIface<SceneObjec
     }
     
     onTick(delta: number) {
-        // noop
+        
+        // TODO: Widen this
+        if (!(this.game.currentScene instanceof MainScene)) {
+            return;
+        }
+        
+        const { playerChar } = this.game.currentScene.items;
+        
+        // Update slots
+        const len = Object.keys(this.slotSpriteMap).length;
+        
+        for (let i = 0; i < len; i++) {
+            const invItem = playerChar.inventory.getItemInSlot(i);
+            
+            if (invItem === null) {
+                if (this.slotSpriteMap[i].texture !== Texture.WHITE) {
+                    this.slotSpriteMap[i].texture = Texture.WHITE;
+                    this.slotSpriteMap[i].visible = false;
+                }
+            }
+            else if (invItem.sprite instanceof Sprite) {
+                if (this.slotSpriteMap[i].texture !== invItem.sprite.texture) {
+                    this.slotSpriteMap[i].texture = invItem.sprite.texture;
+                    this.slotSpriteMap[i].visible = true;
+                }
+            }
+        }
+        
     }
     
 }

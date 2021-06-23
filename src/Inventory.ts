@@ -28,6 +28,11 @@ export class Inventory {
         this.items = this.items.filter(existingItem => existingItem !== inventoryItem);
     }
     
+    getItemInSlot(slot: number): InventoryInstance | null {
+        // TODO: Make this actually work off of slots. For now it's just using index but that is not likely to be the final approach.
+        return this.items[slot] ?? null;
+    }
+    
     static createItemFromDefinition(definition: InventoryItemDefinition, qty: number): InventoryInstance {
         return {
             ...definition,

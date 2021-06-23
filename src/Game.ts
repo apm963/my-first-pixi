@@ -20,6 +20,7 @@ export class Game {
     
     app: Application;
     currentScene: null | (GameSceneBase & GameSceneIface<unknown>) = null;
+    uiHudScene: null | UiHudScene = null;
     state: GameState = this.initState;
     inventoryItemDefinitions: { [name in GameInventoryItemNames]: InventoryItemDefinition } = {} as Game['inventoryItemDefinitions']; // This gets set within setup
     
@@ -80,7 +81,7 @@ export class Game {
         this.currentScene = mainScene.addToGame(this.app.stage);
         
         // Add UI to stage
-        uiHudScene.addToGame(this.app.stage);
+        this.uiHudScene = uiHudScene.addToGame(this.app.stage);
         
         // Render this initial stage
         this.app.renderer.render(this.app.stage);
@@ -270,6 +271,9 @@ export class Game {
         
         // Particles
         currentScene.onTick(delta);
+        
+        // UI update
+        this.uiHudScene?.onTick(delta);
         
     }
     
