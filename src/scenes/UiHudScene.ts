@@ -110,11 +110,13 @@ export class UiHudScene extends GameSceneBase implements UiSceneIface<SceneObjec
         
         const playerInventorySlots: InteractableEntity<Container>[] = [];
         const playerSlotItemMap: ({ texture: Texture<Resource>; qty: number; } | undefined)[] = []; // TODO: Support loading save
+        const numDisplayedSlots = 7;
+        const worldSize = 10;
         
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < numDisplayedSlots; i++) {
             const playerSlotItem = playerSlotItemMap[i] ?? null;
             const [slotEnt, slotItemSprite, setQtyText] = generateSlot(playerSlotItem?.texture ?? null, 14, playerSlotItem?.qty ?? 0);
-            slotEnt.position.set((tileSize * (1 + i)) + (tileSize / 2), (tileSize * 8) + (tileSize / 2));
+            slotEnt.position.set((tileSize * (((worldSize - numDisplayedSlots) / 2) + i)), (tileSize * 8) + (tileSize / 2));
             slotEnt.addTo(sceneContainer);
             this.slotDataMap[i] = { slotEnt, slotItemSprite, setQtyText };
         }
